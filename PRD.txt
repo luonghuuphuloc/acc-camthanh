@@ -1,0 +1,112 @@
+TÀI LIỆU ĐẶC TẢ KỸ THUẬT: WEB-APP DI SẢN CẨM THÀNH & NGHĨA TRANG THIÊN BÚT
+I. TỔNG QUAN HẠ TẦNG & KIẾN TRÚC
+Target Device: Mobile-first (Tối ưu hiển thị mượt mà trên di động), hỗ trợ Responsive cho Desktop.
+
+Deployment: Local Server Host.
+
+IP Address: 172.30.65.176
+
+Domain Admin (Local DNS): tuoitrecamthanh.com.vn/admin
+
+Security & Rate Limit: Giới hạn tối đa 50 requests/second (Sử dụng middleware Rate Limiter như Nginx Rate Limiting hoặc express-rate-limit để bảo vệ server tránh bị quá tải, DDOS).
+
+II. THIẾT KẾ HỆ MÀU SẮC CHỦ ĐẠO (DESIGN SYSTEM)
+Để trang web mang tính chất trang trọng, văn hóa di sản nhưng vẫn hiện đại, Agent cần tuân thủ hệ màu sau:
+
+Màu nền chủ đạo: Trắng kem #FDFBF7 (Tạo cảm giác hoài niệm, nhẹ nhàng).
+
+Màu chữ & Thanh tiêu đề: Đỏ đô #8B1E1E (Màu cờ, màu di sản tâm linh trang trọng).
+
+Hệ màu phân loại nhóm (Module 1):
+
+🔴 Di tích lịch sử: Đỏ #E11D48 (Crimson Red)
+
+🟡 Ăn uống/Ẩm thực: Vàng cam #F59E0B (Amber)
+
+🟢 Đặc sản địa phương: Xanh lá cây mạ #10B981 (Emerald)
+
+III. ĐẶC TẢ CHI TIẾT CÁC MODULE CHỨC NĂNG
+TRANG 1: DI SẢN VÀ ĐỊA PHƯƠNG CẨM THÀNH
+📌 Module 1: Bản đồ di sản & Tiện ích địa phương
+Giao diện:
+
+Phía trên là Tiêu đề giới thiệu (Ví dụ: "Khám Phá Di Sản Cẩm Thành").
+
+Bên dưới là 1 bản đồ tĩnh của phường Cẩm Thành (Sử dụng SVG tương tác hoặc Image Map). Trên bản đồ ghim sẵn các điểm tọa độ.
+
+Ngay dưới bản đồ có 1 Bottom Sheet/Popup chứa 3 icon bộ lọc: [🔴 Di tích], [🟡 Ăn uống], [🟢 Đặc sản].
+
+Logic tương tác:
+
+Filter: Mặc định hiện tất cả. Khi user bấm chọn nhóm nào (v dụ: 🔴 Di tích), tất cả các ghim thuộc 2 nhóm kia tự động ẩn đi (display: none hoặc filter class).
+
+Click Pin: Khi user bấm vào một địa điểm bất kỳ trên bản đồ, hiển thị ngay 1 Popup nhỏ (Tooltip) đè ngay trên vị trí ghim đó, nội dung chứa: Tên địa điểm và Địa chỉ. Bấm ra ngoài hoặc bấm nút x để đóng.
+
+📌 Module 2: Giới thiệu & Điều hướng tâm linh
+Giao diện: Khi user cuộn (scroll) màn hình xuống dưới Module 1.
+
+Hiển thị một khối văn bản ngắn giới thiệu về lịch sử, con người Phường Cẩm Thành (Text lấy từ DB/Admin).
+
+Dưới cùng là một nút nhấn nổi bật (Button Call-to-Action) có màu Đỏ đô #8B1E1E: "Đi đến Nghĩa Trang Thiên Bút".
+
+Logic tương tác: Khi nhấn nút, thực hiện chuyển mượt mà (SPA Route hoặc chuyển trang) sang Trang 2 (Module 3).
+
+TRANG 2: SA BÀN SỐ HÓA NGHĨA TRANG THIÊN BÚT
+📌 Module 3: Sa bàn Nghĩa trang tương tác & Tra cứu
+Bố cục từ trên xuống dưới:
+
+Tiêu đề: "Sa bàn Nghĩa trang Liệt sĩ Núi Thiên Bút" (Chữ in hoa, trang trọng).
+
+Khung video: Nhúng mã Iframe YouTube phát bài thuyết minh nghĩa trang (Quản lý thay đổi link được trong Admin).
+
+Mô tả ngắn: Đoạn văn ngắn về quy mô, ý nghĩa nghĩa trang.
+
+Thanh tìm kiếm (Search Bar): Cho phép gõ tìm kiếm Họ tên liệt sĩ. Có cơ chế tự động gợi ý (Auto-suggest) khi gõ từ 2 ký tự.
+
+Sa bàn 2D: Sử dụng hình ảnh đồ họa mô phỏng nghĩa trang (Vẽ lại từ thực tế).
+
+Logic Sa bàn 2D & Định vị:
+
+Vị trí hiện tại: Có một icon điểm sáng nhấp nháy + Mũi tên chỉ "Bạn đang ở đây" cố định ngay cổng vào nghĩa trang.
+
+Cấu trúc mộ: Các ô mộ được sắp xếp chuẩn theo Khu (A, B, C, D, E) dựa trên dữ liệu file Word và Excel.
+
+Mộ đặc biệt (VIP): Các ngôi mộ của các đồng chí cách mạng lão thành, Anh hùng LLVT (ví dụ: AHLS Nguyễn Kim Vang, Đ/c Nguyễn Nghiêm...) sẽ hiển thị ô màu đỏ, các mộ thường hiển thị màu xám ghi/trắng.
+
+Popup thông tin mộ: Khi click vào một ô mộ bất kỳ:
+
+Mộ thường: Hiện popup cơ bản (Họ tên, Năm sinh - Hy sinh, Quê quán, Đơn vị).
+
+Mộ đặc biệt: Hiện thông tin chi tiết hơn (Thêm chức vụ, danh hiệu, tiểu sử vắn tắt).
+
+Chức năng Chỉ đường nội khu: Trong popup thông tin mỗi mộ có nút "Chỉ đường". Khi nhấn, hệ thống sẽ vẽ/hiển thị một đường Line màu xanh dương cường độ cao chạy từ điểm "Bạn đang ở đây" (Cổng) len lỏi qua các lối đi đến đúng vị trí ô mộ vừa chọn.
+
+Tính năng Quét QR Code (Deep Link): Mỗi mộ có 1 URL định danh duy nhất (Ví dụ: 172.30.65.176/nghia-trang?tomb_id=KHU_A_H_G_09). Khi user quét mã QR thực địa bằng điện thoại, Web-app tự động mở ra, trượt thẳng đến vị trí sa bàn và tự động trigger mở sẵn Popup thông tin của liệt sĩ đó luôn.
+
+📌 Module 4: Chỉ đường Google Maps ngoại khu
+Nằm ngay dưới khu vực Sa bàn 2D.
+
+Nhúng một bản đồ Google Maps Iframe đã ghim sẵn vị trí Nghĩa trang Liệt sĩ Núi Thiên Bút để người dân từ xa có thể bấm vào và dẫn đường bằng ứng dụng Google Maps từ vị trí thực tế của họ trên đường lớn đến nghĩa trang.
+
+TRANG BẢO TRÌ: HỆ THỐNG QUẢN TRỊ (ADMIN PANEL)
+📌 Module 5: Chức năng Quản lý Backend
+Đường dẫn truy cập: tuoitrecamthanh.com.vn/admin
+
+Bảo mật: Trang đăng nhập yêu cầu Mật khẩu: Admin@123 (Để tinh gọn, giai đoạn này có thể hardcode pass hoặc lưu biến môi trường, bảo mật ở mức cơ bản).
+
+Các form chức năng cập nhật (CRUD đơn giản):
+
+Quản lý Module 1: Thay đổi tọa độ X, Y trên ảnh bản đồ tĩnh, sửa Tên, Địa chỉ của các địa điểm di tích, ăn uống, đặc sản.
+
+Quản lý Module 2 & 3: Các ô Input cho phép sửa đoạn mô tả ngắn về Phường, đoạn mô tả về Nghĩa trang, và Ô nhập link YouTube thuyết minh mới.
+
+Quản lý thông tin mộ: Danh sách bảng (Table) có bộ lọc, cho phép bấm "Sửa" nhanh thông tin của từng liệt sĩ (Họ tên, quê quán, loại mộ thường/đặc biệt) mà không cần phải can thiệp vào code database.
+
+IV. ĐỀ XUẤT CÔNG NGHỆ CHO AGENT CODE
+Để web chạy cực nhẹ trên Local Server và Mobile mượt mà, anh hãy cấu hình Agent viết theo bộ techstack này:
+
+Frontend: React (Vite) + TailwindCSS (để giao diện mượt, responsive siêu nhanh) kết hợp thư viện Lucide React làm icon.
+
+Đồ họa Sa bàn: Dùng thẻ <svg> chứa sơ đồ lưới hoặc tầng Canvas xử lý vẽ đường đi màu xanh để không bị vỡ nét trên di động.
+
+Backend & Database: Node.js (Express) + SQLite (hoặc lưu file JSON ngay trong server để dễ backup, di chuyển, không cần cài đặt database phức tạp trên máy local).
