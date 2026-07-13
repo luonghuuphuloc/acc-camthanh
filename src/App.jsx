@@ -302,19 +302,23 @@ function HomePage({ settings, onAdmin, onCemetery }) {
   );
 }
 
-function SiteFooter({ settings, onAdmin, showAdmin = true }) {
+function SiteFooter({ settings, onHome, onAdmin, showAdmin = true }) {
   return (
-    <footer className={showAdmin ? "siteFooter" : "siteFooter compactFooter"}>
-      {showAdmin && (
-        <div>
-          <p className="eyebrow">Điều hướng</p>
-          <div className="footerActions">
+    <footer className="siteFooter">
+      <div>
+        <p className="eyebrow">Điều hướng</p>
+        <div className="footerActions">
+          {showAdmin ? (
             <button className="footerAdmin" onClick={onAdmin}>
               <Lock size={15} /> Admin
             </button>
-          </div>
+          ) : (
+            <button className="footerAdmin" onClick={onHome}>
+              <Home size={15} /> Trang chủ
+            </button>
+          )}
         </div>
-      )}
+      </div>
       <div>
         <p className="eyebrow">Cơ quan quản lý</p>
         <strong>{settings.footerAgency || "Đoàn phường Cẩm Thành"}</strong>
@@ -462,7 +466,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
         </a>
       </section>
 
-      <SiteFooter settings={settings} onAdmin={onAdmin} showAdmin={false} />
+      <SiteFooter settings={settings} onHome={onHome} onAdmin={onAdmin} showAdmin={false} />
     </>
   );
 }
