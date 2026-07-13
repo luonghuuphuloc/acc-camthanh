@@ -1,6 +1,6 @@
-# Di sản Cẩm Thành - Sa bàn Nghĩa trang Núi Thiên Bút
+# acc-camthanh
 
-MVP web-app gồm trang public tra cứu mộ và trang admin kéo-thả vị trí mộ lên sa bàn.
+Website di sản cho phường Cẩm Thành, gồm trang public tra cứu mộ và trang admin kéo-thả vị trí mộ lên sa bàn Nghĩa trang Núi Thiên Bút.
 
 ## Chạy local
 
@@ -23,7 +23,7 @@ Mật khẩu admin mặc định là `Admin@123`. Khi triển khai thật, đặ
 ADMIN_PASSWORD=mat-khau-moi npm run server
 ```
 
-## Cách cấu hình sa bàn
+## Cấu hình sa bàn
 
 1. Vào `/admin` và đăng nhập.
 2. Tìm mộ theo tên, khu, hàng hoặc số mộ.
