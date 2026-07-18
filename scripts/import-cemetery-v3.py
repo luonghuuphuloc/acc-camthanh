@@ -22,6 +22,7 @@ from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parents[1]
 GRAVES_PATH = ROOT / "data" / "graves.json"
+SPECIAL_LAYOUT_PATH = ROOT / "data" / "special-grave-layout.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,13 +61,12 @@ def make_id(khu: str, hang: int | None, mo: int | None, tt: int) -> str:
     return f"HS-{tt:03d}"
 
 
-def e_position(hang: int | None, mo: int | None) -> tuple[float | None, float | None]:
-    if not hang or not mo:
-        return None, None
-    max_mo = 5 if hang == 1 else 10
-    start, end = (85.0, 93.8) if hang == 1 else (84.0, 97.05)
-    ratio = 0.5 if max_mo == 1 else (mo - 1) / (max_mo - 1)
-    return round(start + (end - start) * ratio, 2), 8.5 if hang == 1 else 14.2
+def load_special_layout() -> dict[tuple[str, int, int], tuple[float, float]]:
+    layout = json.loads(SPECIAL_LAYOUT_PATH.read_text(encoding="utf-8"))
+    return {
+        (normalize(item["khu"]), int(item["hang"]), int(item["mo"])): (float(item["x"]), float(item["y"]))
+        for item in layout["positions"]
+    }
 
 
 def read_map_labels(path: Path | None) -> list[str]:
@@ -104,6 +104,7 @@ def main() -> None:
     worksheet = next(sheet for sheet in workbook.worksheets if sheet.max_row >= 9 and sheet.max_column >= 13)
 
     rows = []
+    special_layout = load_special_layout()
     next_tt = max((int(item.get("tt") or 0) for item in existing), default=0)
     added = 0
     preserved_positions = 0
@@ -152,11 +153,12 @@ def main() -> None:
             "y": old.get("y") if old else None,
         }
 
-        if old and old.get("x") is not None and old.get("y") is not None:
+        authoritative_position = special_layout.get((normalize(khu), hang, mo)) if hang and mo else None
+        if authoritative_position:
+            record["x"], record["y"] = authoritative_position
+            record["placed"] = True
+        elif old and old.get("x") is not None and old.get("y") is not None:
             preserved_positions += 1
-        elif normalize(khu) == "e":
-            record["x"], record["y"] = e_position(hang, mo)
-            record["placed"] = record["x"] is not None
 
         if old and old.get("updatedAt"):
             record["updatedAt"] = old["updatedAt"]
