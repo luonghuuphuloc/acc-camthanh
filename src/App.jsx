@@ -4,9 +4,9 @@ import QRCode from "qrcode";
 import {
   ArrowLeft,
   Check,
+  ChevronRight,
   Download,
   Edit3,
-  Gift,
   Home,
   Landmark,
   LocateFixed,
@@ -21,9 +21,10 @@ import {
   Save,
   Search,
   Star,
-  Utensils,
   X,
 } from "lucide-react";
+import HeritageDetailPage from "./HeritageDetailPage";
+import { heritageSites, heritageSitesByRoute } from "./heritageSites";
 import "./styles.css";
 
 const API = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:5174" : "");
@@ -37,6 +38,12 @@ function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [query, setQuery] = useState("");
   const selected = graves.find((grave) => grave.id === selectedId);
+
+  useEffect(() => {
+    const syncRoute = () => setRoute(initialRoute());
+    window.addEventListener("popstate", syncRoute);
+    return () => window.removeEventListener("popstate", syncRoute);
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -112,6 +119,29 @@ function App() {
             history.pushState(null, "", "/nghia-trang");
             setRoute("cemetery");
           }}
+          onHeritage={(site) => {
+            history.pushState(null, "", site.path);
+            setRoute(site.route);
+            window.scrollTo({ top: 0, behavior: "instant" });
+          }}
+        />
+      ) : heritageSitesByRoute[route] ? (
+        <HeritageDetailPage
+          site={heritageSitesByRoute[route]}
+          onHome={() => {
+            history.pushState(null, "", "/");
+            setRoute("home");
+          }}
+          footer={
+            <SiteFooter
+              settings={settings}
+              onHome={() => {
+                history.pushState(null, "", "/");
+                setRoute("home");
+              }}
+              showAdmin={false}
+            />
+          }
         />
       ) : (
         <CemeteryPage
@@ -140,57 +170,42 @@ function App() {
 function initialRoute() {
   if (location.pathname.startsWith("/admin")) return "admin";
   if (location.pathname.startsWith("/nghia-trang")) return "cemetery";
+  const heritageSite = heritageSites.find((site) => location.pathname.startsWith(site.path));
+  if (heritageSite) return heritageSite.route;
   return "home";
 }
 
 const heritagePlaces = [
   {
-    id: "di-tich-1",
-    name: "Khu tưởng niệm Núi Thiên Bút",
-    address: "Phường Cẩm Thành, TP. Quảng Ngãi",
+    id: "nghia-trang-thien-but",
+    name: "Nghĩa trang Liệt sĩ Núi Thiên Bút",
+    address: "Phường Cẩm Thành, Quảng Ngãi",
     category: "heritage",
-    x: 56,
-    y: 29,
+    x: 42,
+    y: 38,
+    image: "/cemetery-map.jpg",
+    route: "cemetery",
   },
-  {
-    id: "di-tich-2",
-    name: "Không gian ký ức Cẩm Thành",
-    address: "Trung tâm phường Cẩm Thành",
+  ...heritageSites.map((site, index) => ({
+    id: site.slug,
+    name: site.title,
+    address: site.address,
     category: "heritage",
-    x: 39,
-    y: 42,
-  },
-  {
-    id: "am-thuc-1",
-    name: "Quán ăn địa phương",
-    address: "Tuyến đường chính Cẩm Thành",
-    category: "food",
-    x: 66,
-    y: 52,
-  },
-  {
-    id: "dac-san-1",
-    name: "Điểm giới thiệu đặc sản",
-    address: "Khu dân cư Cẩm Thành",
-    category: "specialty",
-    x: 32,
-    y: 64,
-  },
-  {
-    id: "am-thuc-2",
-    name: "Ẩm thực ven sông",
-    address: "Khu vực ven sông Trà Khúc",
-    category: "food",
-    x: 74,
-    y: 70,
-  },
+    x: index === 0 ? 62 : 52,
+    y: index === 0 ? 32 : 58,
+    image: site.heroImage,
+    site,
+  })),
 ];
 
-function HomePage({ settings, onAdmin, onCemetery }) {
-  const [filter, setFilter] = useState("all");
+function HomePage({ settings, onAdmin, onCemetery, onHeritage }) {
   const [activeId, setActiveId] = useState(null);
-  const visiblePlaces = heritagePlaces.filter((place) => filter === "all" || place.category === filter);
   const activePlace = heritagePlaces.find((place) => place.id === activeId);
+
+  function openPlace(place) {
+    if (place.route === "cemetery") onCemetery();
+    else onHeritage(place.site);
+  }
 
   return (
     <>
@@ -219,8 +234,8 @@ function HomePage({ settings, onAdmin, onCemetery }) {
               <div className="mapRoad roadEast" />
               <div className="mapArea areaWest">Nghĩa Lộ</div>
               <div className="mapArea areaSouth">An Hòa</div>
-              {visiblePlaces.map((place) => {
-                const Icon = place.category === "heritage" ? Landmark : place.category === "food" ? Utensils : Gift;
+              {heritagePlaces.map((place) => {
+                const Icon = Landmark;
                 return (
                   <button
                     key={place.id}
@@ -256,31 +271,27 @@ function HomePage({ settings, onAdmin, onCemetery }) {
             </div>
           </div>
 
-          <div className="filterDock">
-            {[
-              ["all", "Tất cả", MapPin],
-              ["heritage", "Di tích", Landmark],
-              ["food", "Ăn uống", Utensils],
-              ["specialty", "Đặc sản", Gift],
-            ].map(([key, label, Icon]) => (
-              <button key={key} className={filter === key ? "active" : ""} onClick={() => setFilter(key)}>
-                <Icon size={17} /> {label}
-              </button>
-            ))}
+          <div className="collectionHeading">
+            <div>
+              <p className="eyebrow">Hành trình di sản</p>
+              <h2>Ba địa điểm, ba lớp ký ức của Quảng Ngãi</h2>
+            </div>
+            <span>Chọn một địa điểm để xem câu chuyện, ảnh tư liệu và hướng dẫn tham quan.</span>
           </div>
 
           <div className="placeList">
-            {visiblePlaces.map((place) => (
+            {heritagePlaces.map((place) => (
               <button
                 key={place.id}
                 className={`placeCard ${place.category} ${activeId === place.id ? "active" : ""}`}
-                onClick={() => setActiveId(activeId === place.id ? null : place.id)}
+                onClick={() => openPlace(place)}
               >
-                {place.category === "heritage" ? <Landmark size={18} /> : place.category === "food" ? <Utensils size={18} /> : <Gift size={18} />}
+                <img src={place.image} alt="" />
                 <span>
                   <strong>{place.name}</strong>
                   <small>{place.address}</small>
                 </span>
+                <ChevronRight size={19} />
               </button>
             ))}
           </div>
