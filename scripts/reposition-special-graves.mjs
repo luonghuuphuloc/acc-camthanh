@@ -5,6 +5,7 @@ const [gravesPath = "data/graves.json", layoutPath = "data/special-grave-layout.
 const [graves, layout] = await Promise.all([readJson(gravesPath), readJson(layoutPath)]);
 
 const positions = new Map(layout.positions.map((position) => [key(position), position]));
+const gravesById = new Map(graves.map((grave) => [grave.id, grave]));
 const gravesByPosition = new Map();
 for (const grave of graves) {
   const graveKey = key(grave);
@@ -13,13 +14,30 @@ for (const grave of graves) {
   gravesByPosition.set(graveKey, grave);
 }
 
-const missing = [...positions.keys()].filter((graveKey) => !gravesByPosition.has(graveKey));
+const resolved = new Map(
+  [...positions].map(([graveKey, position]) => [
+    graveKey,
+    gravesById.get(expectedId(position)) || gravesByPosition.get(graveKey),
+  ]),
+);
+const missing = [...resolved].filter(([, grave]) => !grave).map(([graveKey]) => graveKey);
 if (missing.length) throw new Error(`Layout positions without grave records: ${missing.join(", ")}`);
 
 let updated = 0;
 for (const [graveKey, position] of positions) {
-  const grave = gravesByPosition.get(graveKey);
-  if (grave.x !== position.x || grave.y !== position.y || grave.placed !== true || grave.type !== "special") updated += 1;
+  const grave = resolved.get(graveKey);
+  if (
+    grave.khu !== position.khu ||
+    Number(grave.hang) !== position.hang ||
+    Number(grave.mo) !== position.mo ||
+    grave.x !== position.x ||
+    grave.y !== position.y ||
+    grave.placed !== true ||
+    grave.type !== "special"
+  ) updated += 1;
+  grave.khu = position.khu;
+  grave.hang = position.hang;
+  grave.mo = position.mo;
   grave.x = position.x;
   grave.y = position.y;
   grave.placed = true;
@@ -35,4 +53,10 @@ async function readJson(file) {
 
 function key({ khu, hang, mo }) {
   return `${String(khu || "").trim()}|${Number(hang)}|${Number(mo)}`;
+}
+
+function expectedId({ khu, hang, mo }) {
+  if (khu === "E" && hang === 1 && mo === 1) return "HS-326";
+  const zone = khu === "TĐ B" ? "TDB" : khu === "TĐ N" ? "TDN" : khu;
+  return `${zone}-${String(hang).padStart(2, "0")}-${String(mo).padStart(2, "0")}`;
 }
