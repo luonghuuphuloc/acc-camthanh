@@ -8,14 +8,12 @@ import {
   Download,
   Edit3,
   Home,
-  Landmark,
   LocateFixed,
   Lock,
   MapPin,
   Minus,
   Move,
   Navigation,
-  PlayCircle,
   Plus,
   RotateCcw,
   Save,
@@ -24,6 +22,8 @@ import {
   X,
 } from "lucide-react";
 import HeritageDetailPage from "./HeritageDetailPage";
+import CamThanhMap from "./components/CamThanhMap";
+import VideoFrame from "./components/VideoFrame";
 import { heritageSites, heritageSitesByRoute } from "./heritageSites";
 import "./styles.css";
 
@@ -181,18 +181,20 @@ const heritagePlaces = [
     name: "Nghĩa trang Liệt sĩ Núi Thiên Bút",
     address: "Phường Cẩm Thành, Quảng Ngãi",
     category: "heritage",
-    x: 42,
-    y: 38,
+    lat: 15.106445,
+    lng: 108.8124696,
+    to: 12,
     image: "/cemetery-map.jpg",
     route: "cemetery",
   },
-  ...heritageSites.map((site, index) => ({
+  ...heritageSites.map((site) => ({
     id: site.slug,
     name: site.title,
     address: site.address,
     category: "heritage",
-    x: index === 0 ? 62 : 52,
-    y: index === 0 ? 32 : 58,
+    lat: site.lat,
+    lng: site.lng,
+    to: site.to,
     image: site.heroImage,
     site,
   })),
@@ -226,47 +228,23 @@ function HomePage({ settings, onAdmin, onCemetery, onHeritage }) {
       <main className="homePage">
         <section className="heritageMapShell">
           <div className="heritageMapFrame">
-            <div className="curatedMap" aria-label="Bản đồ gợi ý các điểm tại Cẩm Thành">
-              <div className="mapRiver"><span>Sông Trà Khúc</span></div>
-              <div className="mapDistrict"><span>Cẩm Thành</span></div>
-              <div className="mapRoad roadNorth" />
-              <div className="mapRoad roadMain" />
-              <div className="mapRoad roadEast" />
-              <div className="mapArea areaWest">Nghĩa Lộ</div>
-              <div className="mapArea areaSouth">An Hòa</div>
-              {heritagePlaces.map((place) => {
-                const Icon = Landmark;
-                return (
-                  <button
-                    key={place.id}
-                    className={`placePin ${place.category} ${activeId === place.id ? "active" : ""}`}
-                    style={{ left: `${place.x}%`, top: `${place.y}%` }}
-                    onClick={() => setActiveId(activeId === place.id ? null : place.id)}
-                    title={place.name}
-                  >
-                    <Icon size={16} />
-                  </button>
-                );
-              })}
-              {activePlace && (
-                <div className="placeTooltip" style={{ left: `${activePlace.x}%`, top: `${activePlace.y}%` }}>
-                  <button onClick={() => setActiveId(null)} aria-label="Đóng điểm đang chọn">
-                    <X size={15} />
-                  </button>
-                  <strong>{activePlace.name}</strong>
-                  <span>{activePlace.address}</span>
-                </div>
-              )}
-            </div>
+            <CamThanhMap
+              places={heritagePlaces}
+              activeId={activeId}
+              onSelect={(id) => setActiveId(activeId === id ? null : id)}
+            />
             <div className="mapCaption">
               <MapPin size={16} />
-              <span>Bản đồ đã giản lược để tập trung vào các điểm cần giới thiệu, không hiển thị các POI ngoài phạm vi trải nghiệm.</span>
+              <span>
+                Ranh giới phường Cẩm Thành và 15 tổ dân phố. Ba điểm di sản được đánh dấu theo tọa độ thực tế.
+                {activePlace ? ` Đang chọn: ${activePlace.name} (Tổ ${activePlace.to}).` : ""}
+              </span>
               <a
                 href="https://www.google.com/maps/search/?api=1&query=Ph%C6%B0%E1%BB%9Dng%20C%E1%BA%A9m%20Th%C3%A0nh%2C%20Qu%E1%BA%A3ng%20Ng%C3%A3i"
                 target="_blank"
                 rel="noreferrer"
               >
-                Mở bản đồ
+                Mở toàn màn hình
               </a>
             </div>
           </div>
@@ -459,7 +437,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
           <p className="eyebrow">Giới thiệu và thuyết minh</p>
           <p>{settings.cemeteryIntro}</p>
         </div>
-        <VideoFrame url={settings.youtubeUrl} />
+        <VideoFrame url={settings.youtubeUrl} title="Video thuyết minh Nghĩa trang Liệt sĩ Núi Thiên Bút" />
       </section>
 
       <section className="externalMap">
@@ -469,7 +447,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
         </div>
         <a
           className="primaryBtn mapLink"
-          href="https://www.google.com/maps/search/?api=1&query=Nghĩa trang liệt sĩ Núi Thiên Bút, Quảng Ngãi"
+          href="https://www.google.com/maps/search/?api=1&query=15.106445%2C108.8124696"
           target="_blank"
           rel="noreferrer"
         >
@@ -479,28 +457,6 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
 
       <SiteFooter settings={settings} onHome={onHome} onAdmin={onAdmin} showAdmin={false} />
     </>
-  );
-}
-
-function VideoFrame({ url }) {
-  const embedUrl = normalizeYoutube(url);
-  if (!embedUrl) {
-    return (
-      <div className="videoPlaceholder">
-        <PlayCircle size={26} />
-        <span>Chưa cấu hình video thuyết minh</span>
-      </div>
-    );
-  }
-
-  return (
-    <iframe
-      className="videoFrame"
-      src={embedUrl}
-      title="Video thuyết minh nghĩa trang"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-    />
   );
 }
 
@@ -1369,19 +1325,6 @@ function compareGraves(a, b) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
-}
-
-function normalizeYoutube(url) {
-  if (!url) return "";
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.includes("youtu.be")) return `https://www.youtube.com/embed/${parsed.pathname.slice(1)}`;
-    if (parsed.searchParams.get("v")) return `https://www.youtube.com/embed/${parsed.searchParams.get("v")}`;
-    if (parsed.pathname.includes("/embed/")) return url;
-  } catch {
-    return "";
-  }
-  return "";
 }
 
 async function fetchJson(pathname, options = {}) {

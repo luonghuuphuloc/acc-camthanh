@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowLeft, Award, CalendarDays, ChevronRight, ExternalLink, Landmark, MapPin } from "lucide-react";
+import VideoFrame from "./components/VideoFrame";
 
 export default function HeritageDetailPage({ site, onHome, footer }) {
   return (
@@ -61,6 +62,15 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
               </div>
             </article>
           ))}
+        </section>
+
+        <section className="heritageVideoSection">
+          <div className="sectionHeading">
+            <p className="eyebrow">Thuyết minh di tích</p>
+            <h2>Câu chuyện qua hình ảnh</h2>
+            <p>Phim tư liệu giới thiệu lịch sử, không gian và giá trị của {site.title}.</p>
+          </div>
+          <VideoFrame url={site.youtubeUrl} title={`Video thuyết minh ${site.title}`} />
         </section>
 
         <section className="heritageTimeline">

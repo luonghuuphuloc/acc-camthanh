@@ -10,9 +10,12 @@ export const heritageSites = [
       "Một địa chỉ đỏ ghi dấu khí tiết của các chiến sĩ yêu nước và cách mạng trong hệ thống nhà tù thực dân tại Quảng Ngãi.",
     heroImage: "/heritage/nha-lao-quang-ngai.jpg",
     heroAlt: "Bia tưởng niệm tại địa điểm Nhà lao Quảng Ngãi",
-    address: "Hẻm 80 Trần Cẩm, tổ dân phố 1, phường Trần Hưng Đạo, Quảng Ngãi",
-    mapUrl:
-      "https://www.google.com/maps/search/?api=1&query=H%E1%BA%BBm%2080%20Tr%E1%BA%A7n%20C%E1%BA%A9m%2C%20Qu%E1%BA%A3ng%20Ng%C3%A3i",
+    address: "54 đường Cẩm Thành (Hẻm 80 Trần Cẩm cũ), phường Cẩm Thành, Quảng Ngãi",
+    lat: 15.1264354,
+    lng: 108.8059732,
+    to: 3,
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=15.1264354%2C108.8059732",
+    youtubeUrl: "https://www.youtube.com/watch?v=5fFooqlsKl4",
     recognized: "17/05/2024",
     period: "Thời Pháp thuộc - 1945",
     intro:
@@ -88,9 +91,12 @@ export const heritageSites = [
       "Không gian tưởng niệm 68 chiến sĩ giải phóng quân đã chiến đấu và hy sinh trong cuộc Tổng tiến công và nổi dậy Tết Mậu Thân năm 1968.",
     heroImage: "/heritage/phu-dieu-68-hero.jpg",
     heroAlt: "Phù điêu tưởng niệm 68 chiến sĩ giải phóng quân",
-    address: "Ngã ba Nguyễn Du - Nguyễn Nghiêm, tổ dân phố 20, phường Cẩm Thành, Quảng Ngãi",
-    mapUrl:
-      "https://www.google.com/maps/search/?api=1&query=Nguy%E1%BB%85n%20Du%20Nguy%E1%BB%85n%20Nghi%C3%AAm%2C%20C%E1%BA%A9m%20Th%C3%A0nh%2C%20Qu%E1%BA%A3ng%20Ng%C3%A3i",
+    address: "Ngã ba Nguyễn Du - Nguyễn Nghiêm, Tổ 6 (khu vực tổ dân phố 20 cũ), phường Cẩm Thành, Quảng Ngãi",
+    lat: 15.1235021,
+    lng: 108.8119924,
+    to: 6,
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=15.1235021%2C108.8119924",
+    youtubeUrl: "https://www.youtube.com/watch?v=SdKjk0zU9OM&feature=youtu.be",
     recognized: "17/02/2025",
     period: "Tết Mậu Thân 1968",
     intro:

@@ -427,6 +427,66 @@ button {
   background: var(--bg-secondary);
 }
 
+.camThanhMap {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: clamp(500px, 58vw, 680px);
+  min-height: 500px;
+  background: #e6ece7;
+}
+
+.camThanhMap .leaflet-control-zoom a {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  color: var(--text-primary);
+  font-size: 21px;
+  line-height: 38px;
+}
+
+.camThanhMap .leaflet-control-attribution {
+  color: #5f625f;
+  background: rgba(255, 255, 255, 0.88);
+  font-size: 10px;
+}
+
+.camThanhMap .leaflet-popup-content-wrapper {
+  border: 1px solid rgba(158, 129, 103, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(42, 34, 26, 0.18);
+}
+
+.camThanhMap .leaflet-popup-content {
+  min-width: 190px;
+  margin: 14px 16px;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  line-height: 1.45;
+}
+
+.camThanhMap .leaflet-popup-content strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.camThanhZoneLabel {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #273237;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 0 3px #ffffff, 0 0 5px #ffffff;
+}
+
+.camThanhZoneLabel::before {
+  display: none;
+}
+
 .curatedMap {
   position: relative;
   min-height: 440px;
@@ -1653,6 +1713,25 @@ dd {
   padding: clamp(48px, 8vw, 96px) 0;
 }
 
+.heritageVideoSection {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.7fr) minmax(420px, 1.3fr);
+  gap: clamp(32px, 6vw, 76px);
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding: clamp(52px, 8vw, 92px) 0;
+}
+
+.heritageVideoSection .sectionHeading {
+  margin: 0;
+}
+
+.heritageVideoSection .sectionHeading > p:last-child {
+  margin: 14px 0 0;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
 .storyPanel {
   display: grid;
   grid-template-columns: minmax(100px, 0.32fr) minmax(0, 1fr);
@@ -2231,6 +2310,17 @@ dd {
 
   .heritageMap {
     min-height: 380px;
+  }
+
+  .camThanhMap {
+    height: min(66svh, 600px);
+    min-height: 460px;
+  }
+
+  .heritageVideoSection {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 52px 0;
   }
 
   .curatedMap {

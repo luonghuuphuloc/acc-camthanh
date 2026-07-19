@@ -156,7 +156,7 @@ function defaultSettings() {
     cemeteryTitle: "Sa bàn Nghĩa trang Liệt sĩ Núi Thiên Bút",
     cemeteryIntro:
       "Tra cứu thông tin, định vị phần mộ và hỗ trợ thân nhân tìm đến đúng vị trí trong khuôn viên nghĩa trang.",
-    youtubeUrl: "",
+    youtubeUrl: "https://www.youtube.com/watch?v=FiGZm_v72JI",
     mapImage: "/cemetery-map.jpg",
     footerAgency: "Đoàn phường Cẩm Thành",
     footerAddress: "Phường Cẩm Thành, Quảng Ngãi",
