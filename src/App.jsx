@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
 import QRCode from "qrcode";
 import {
   ArrowLeft,
@@ -39,11 +40,31 @@ function App() {
   const [query, setQuery] = useState("");
   const selected = graves.find((grave) => grave.id === selectedId);
 
+  useScrollReveal(route, Boolean(settings));
+
+  function navigate(nextRoute, pathname) {
+    const update = () => {
+      history.pushState(null, "", pathname);
+      flushSync(() => setRoute(nextRoute));
+      window.scrollTo({ top: 0, behavior: "instant" });
+    };
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (document.startViewTransition && !reduceMotion) document.startViewTransition(update);
+    else update();
+  }
+
   useEffect(() => {
-    const syncRoute = () => setRoute(initialRoute());
+    const syncRoute = () => {
+      setRoute(initialRoute());
+      window.scrollTo({ top: 0, behavior: "instant" });
+    };
     window.addEventListener("popstate", syncRoute);
     return () => window.removeEventListener("popstate", syncRoute);
   }, []);
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [route]);
 
   useEffect(() => {
     let ignore = false;
@@ -72,9 +93,9 @@ function App() {
   }, []);
 
   const stats = useMemo(() => {
-    const placed = graves.filter((grave) => grave.placed).length;
+    const identified = graves.filter((grave) => !fold(grave.ten || "").startsWith("chua xac dinh")).length;
     const special = graves.filter((grave) => grave.type === "special").length;
-    return { total: graves.length, placed, special };
+    return { total: graves.length, identified, special };
   }, [graves]);
 
   if (!settings) {
@@ -95,6 +116,7 @@ function App() {
 
   return (
     <div className="app">
+      <div className={`routeView route-${route}`} key={route}>
       {route === "admin" ? (
         <AdminPage
           settings={settings}
@@ -103,45 +125,19 @@ function App() {
           setGraves={setGraves}
           selectedId={selectedId}
           setSelectedId={setSelectedId}
-          onPublic={() => {
-            history.pushState(null, "", "/nghia-trang");
-            setRoute("cemetery");
-          }}
+          onPublic={() => navigate("cemetery", "/nghia-trang")}
         />
       ) : route === "home" ? (
         <HomePage
           settings={settings}
-          onAdmin={() => {
-            history.pushState(null, "", "/admin");
-            setRoute("admin");
-          }}
-          onCemetery={() => {
-            history.pushState(null, "", "/nghia-trang");
-            setRoute("cemetery");
-          }}
-          onHeritage={(site) => {
-            history.pushState(null, "", site.path);
-            setRoute(site.route);
-            window.scrollTo({ top: 0, behavior: "instant" });
-          }}
+          onCemetery={() => navigate("cemetery", "/nghia-trang")}
+          onHeritage={(site) => navigate(site.route, site.path)}
         />
       ) : heritageSitesByRoute[route] ? (
         <HeritageDetailPage
           site={heritageSitesByRoute[route]}
-          onHome={() => {
-            history.pushState(null, "", "/");
-            setRoute("home");
-          }}
-          footer={
-            <SiteFooter
-              settings={settings}
-              onHome={() => {
-                history.pushState(null, "", "/");
-                setRoute("home");
-              }}
-              showAdmin={false}
-            />
-          }
+          onHome={() => navigate("home", "/")}
+          footer={<SiteFooter settings={settings} />}
         />
       ) : (
         <CemeteryPage
@@ -153,18 +149,40 @@ function App() {
           query={query}
           setQuery={setQuery}
           stats={stats}
-          onHome={() => {
-            history.pushState(null, "", "/");
-            setRoute("home");
-          }}
-          onAdmin={() => {
-            history.pushState(null, "", "/admin");
-            setRoute("admin");
-          }}
+          onHome={() => navigate("home", "/")}
         />
       )}
+      </div>
     </div>
   );
+}
+
+function useScrollReveal(route, ready) {
+  useEffect(() => {
+    if (!ready) return undefined;
+    const nodes = [...document.querySelectorAll("[data-reveal]")];
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      nodes.forEach((node) => node.classList.add("revealVisible"));
+      return undefined;
+    }
+
+    document.documentElement.classList.add("motion-ready");
+    nodes.forEach((node) => node.classList.add("revealItem"));
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("revealVisible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -7%" });
+    nodes.forEach((node) => observer.observe(node));
+
+    return () => {
+      observer.disconnect();
+      document.documentElement.classList.remove("motion-ready");
+    };
+  }, [route, ready]);
 }
 
 function initialRoute() {
@@ -200,9 +218,10 @@ const heritagePlaces = [
   })),
 ];
 
-function HomePage({ settings, onAdmin, onCemetery, onHeritage }) {
+function HomePage({ settings, onCemetery, onHeritage }) {
   const [activeId, setActiveId] = useState(null);
   const activePlace = heritagePlaces.find((place) => place.id === activeId);
+  const mapRef = useRef(null);
 
   function openPlace(place) {
     if (place.route === "cemetery") onCemetery();
@@ -221,12 +240,23 @@ function HomePage({ settings, onAdmin, onCemetery, onHeritage }) {
             <p>Di sản và địa phương</p>
             <h1>Khám phá di sản Cẩm Thành</h1>
             <span>{settings.heritageIntro}</span>
+            <div className="heroActions">
+              <button className="heroPrimary" onClick={onCemetery}>
+                <Search size={18} /> Tra cứu mộ liệt sĩ <ChevronRight size={18} />
+              </button>
+              <button
+                className="heroSecondary"
+                onClick={() => mapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              >
+                <MapPin size={18} /> Khám phá bản đồ di sản
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="homePage">
-        <section className="heritageMapShell">
+        <section className="heritageMapShell" ref={mapRef} data-reveal>
           <div className="heritageMapFrame">
             <CamThanhMap
               places={heritagePlaces}
@@ -258,75 +288,59 @@ function HomePage({ settings, onAdmin, onCemetery, onHeritage }) {
           </div>
 
           <div className="placeList">
-            {heritagePlaces.map((place) => (
+            {heritagePlaces.map((place, index) => (
               <button
                 key={place.id}
                 className={`placeCard ${place.category} ${activeId === place.id ? "active" : ""}`}
                 onClick={() => openPlace(place)}
+                data-reveal
+                style={{ "--reveal-delay": `${index * 70}ms` }}
               >
                 <img src={place.image} alt="" />
-                <span>
+                <span className="placeCardBody">
+                  <small className="placeCardKicker">Điểm di sản {String(index + 1).padStart(2, "0")}</small>
                   <strong>{place.name}</strong>
                   <small>{place.address}</small>
+                  <span className="placeCardLink">Khám phá <ChevronRight size={17} /></span>
                 </span>
-                <ChevronRight size={19} />
               </button>
             ))}
           </div>
         </section>
-
-        <section className="spiritualBlock">
-          <div>
-            <p className="eyebrow">Điều hướng tâm linh</p>
-            <h2>Nghĩa trang Liệt sĩ Núi Thiên Bút</h2>
-            <p>{settings.cemeteryIntro}</p>
-          </div>
-          <button className="primaryBtn" onClick={onCemetery}>
-            Đi đến Nghĩa Trang Thiên Bút
-          </button>
-        </section>
       </main>
-      <SiteFooter settings={settings} onCemetery={onCemetery} onAdmin={onAdmin} />
+      <SiteFooter settings={settings} />
     </>
   );
 }
 
-function SiteFooter({ settings, onHome, onAdmin, showAdmin = true }) {
+function SiteFooter({ settings }) {
+  const phone = settings.footerPhone?.trim();
+  const showPhone = phone && !fold(phone).includes("dang cap nhat");
   return (
-    <footer className="siteFooter">
-      <div>
-        <p className="eyebrow">Điều hướng</p>
-        <div className="footerActions">
-          {showAdmin ? (
-            <button className="footerAdmin" onClick={onAdmin}>
-              <Lock size={15} /> Admin
-            </button>
-          ) : (
-            <button className="footerAdmin" onClick={onHome}>
-              <Home size={15} /> Trang chủ
-            </button>
-          )}
+    <footer className="siteFooter" data-reveal>
+      <div className="footerIdentity">
+        <img src="/cam-thanh-logo.png" alt="Logo Tuổi trẻ Cẩm Thành" />
+        <div>
+          <strong>Di sản Cẩm Thành</strong>
+          <span>Không gian số hóa ký ức và di sản địa phương</span>
         </div>
       </div>
-      <div>
-        <p className="eyebrow">Cơ quan quản lý</p>
+      <div className="footerGroup">
+        <p>Cơ quan quản lý</p>
         <strong>{settings.footerAgency || "Đoàn phường Cẩm Thành"}</strong>
         <span>{settings.footerAddress || "Phường Cẩm Thành, Quảng Ngãi"}</span>
       </div>
-      <div>
-        <p className="eyebrow">Liên hệ</p>
-        <span>{settings.footerPhone || "SĐT: đang cập nhật"}</span>
+      <div className="footerGroup footerContact">
+        <p>Liên hệ</p>
+        {showPhone && <span>{phone}</span>}
         <span>{settings.footerEmail || "Email: contact@accheritagepro.vn"}</span>
-      </div>
-      <div>
-        <p className="eyebrow">Bản quyền</p>
-        <span>{settings.footerCopyright || "Bản quyền thuộc về ACC Heritage Pro"}</span>
+        <small>{settings.footerCopyright || "Bản quyền thuộc về ACC Heritage Pro"}</small>
       </div>
     </footer>
   );
 }
 
-function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, query, setQuery, stats, onHome, onAdmin }) {
+function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, query, setQuery, stats, onHome }) {
   const [sheetOpen, setSheetOpen] = useState(Boolean(selectedId));
   const results = useMemo(() => prioritizeGraves(searchGraves(graves, query)), [graves, query]);
   const defaultResults = useMemo(() => prioritizeGraves(graves), [graves]);
@@ -410,7 +424,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
 
           <div className="statRow">
             <Stat label="Tổng mộ" value={stats.total} />
-            <Stat label="Đã đặt" value={stats.placed} />
+            <Stat label="Đã xác định" value={stats.identified} />
             <Stat label="Đặc biệt" value={stats.special} />
           </div>
 
@@ -432,7 +446,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
 
       <ProfileSheet grave={sheetOpen ? selected : null} onClose={clearSelectedGrave} onGuide={showInternalRoute} />
 
-      <section className="cemeteryLead">
+      <section className="cemeteryLead" data-reveal>
         <div>
           <p className="eyebrow">Giới thiệu và thuyết minh</p>
           <p>{settings.cemeteryIntro}</p>
@@ -440,7 +454,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
         <VideoFrame url={settings.youtubeUrl} title="Video thuyết minh Nghĩa trang Liệt sĩ Núi Thiên Bút" />
       </section>
 
-      <section className="externalMap">
+      <section className="externalMap" data-reveal>
         <div>
           <p className="eyebrow">Chỉ đường ngoại khu</p>
           <h2>Google Maps đến Nghĩa trang Liệt sĩ Núi Thiên Bút</h2>
@@ -455,7 +469,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
         </a>
       </section>
 
-      <SiteFooter settings={settings} onHome={onHome} onAdmin={onAdmin} showAdmin={false} />
+      <SiteFooter settings={settings} />
     </>
   );
 }
@@ -1239,6 +1253,23 @@ function EmptyProfile() {
 
 function ProfileSheet({ grave, onClose, onGuide }) {
   const [qrBusy, setQrBusy] = useState(false);
+  const closeRef = useRef(null);
+
+  useEffect(() => {
+    if (!grave) return undefined;
+    const previousFocus = document.activeElement;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.body.classList.add("sheetOpen");
+    document.addEventListener("keydown", handleKeyDown);
+    window.requestAnimationFrame(() => closeRef.current?.focus());
+    return () => {
+      document.body.classList.remove("sheetOpen");
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocus?.focus?.();
+    };
+  }, [grave?.id]);
 
   if (!grave) return null;
 
@@ -1260,14 +1291,19 @@ function ProfileSheet({ grave, onClose, onGuide }) {
   }
 
   return (
-    <div className="sheetScrim" onClick={onClose}>
-      <article className="profileSheet" onClick={(event) => event.stopPropagation()}>
+    <div className="sheetScrim" onClick={(event) => event.target === event.currentTarget && onClose()}>
+      <article
+        className="profileSheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="grave-profile-title"
+      >
         <div className="sheetHandle" />
-        <button className="closeBtn" onClick={onClose} aria-label="Đóng hồ sơ">
+        <button ref={closeRef} className="closeBtn" onClick={onClose} aria-label="Đóng hồ sơ">
           <X size={16} />
         </button>
         <p className="eyebrow">{grave.type === "special" ? "Mộ đặc biệt" : "Hồ sơ liệt sĩ"}</p>
-        <h2>{grave.ten}</h2>
+        <h2 id="grave-profile-title">{grave.ten}</h2>
         <p className="locationLine">
           <MapPin size={16} /> {graveLabel(grave)}
         </p>

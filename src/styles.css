@@ -46,6 +46,7 @@
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
   
   color: var(--text-primary);
   background: var(--bg-primary);
@@ -74,10 +75,54 @@ body {
   line-height: 1.5;
 }
 
+body.sheetOpen {
+  overflow: hidden;
+}
+
 .app {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+}
+
+.routeView {
+  min-height: 100vh;
+  animation: routeEnter 300ms var(--ease-out-expo) both;
+}
+
+@keyframes routeEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+::view-transition-old(root) {
+  animation: 160ms ease-in both routeExit;
+}
+
+::view-transition-new(root) {
+  animation: 320ms var(--ease-out-expo) both routeEnter;
+}
+
+@keyframes routeExit {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+.motion-ready .revealItem {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.motion-ready .revealItem.revealVisible {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 420ms var(--ease-out-expo) var(--reveal-delay, 0ms),
+    transform 420ms var(--ease-out-expo) var(--reveal-delay, 0ms);
+}
+
+:where(button, a, input, textarea):focus-visible {
+  outline: 3px solid rgba(139, 30, 30, 0.38);
+  outline-offset: 3px;
 }
 
 button,
@@ -282,6 +327,12 @@ button {
   object-fit: cover;
   filter: saturate(0.85) sepia(0.12) contrast(0.95) brightness(0.88);
   transition: transform 6s ease-out;
+  animation: heroSettle 1400ms var(--ease-out-expo) both;
+}
+
+@keyframes heroSettle {
+  from { transform: scale(1.035); }
+  to { transform: scale(1); }
 }
 
 .heroImage:hover img {
@@ -373,6 +424,58 @@ button {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
+.heroActions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.heroPrimary,
+.heroSecondary {
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 0 20px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 750;
+  transition:
+    transform 180ms var(--ease-out-expo),
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.heroPrimary {
+  border-color: var(--primary-hover);
+  background: var(--primary-hover);
+  box-shadow: 0 8px 24px rgba(74, 12, 12, 0.3);
+}
+
+.heroSecondary {
+  background: rgba(25, 19, 15, 0.38);
+  backdrop-filter: blur(8px);
+}
+
+.heroPrimary:hover,
+.heroSecondary:hover {
+  transform: translateY(-2px);
+}
+
+.heroPrimary:hover {
+  background: #b72b2b;
+}
+
+.heroSecondary:hover {
+  border-color: #ffffff;
+  background: rgba(25, 19, 15, 0.58);
+}
+
 /* Home Page Content Grid */
 .homePage {
   display: grid;
@@ -382,7 +485,6 @@ button {
 }
 
 .heritageIntro,
-.spiritualBlock,
 .cemeteryLead,
 .externalMap {
   min-width: 0;
@@ -394,7 +496,6 @@ button {
 }
 
 .heritageIntro h2,
-.spiritualBlock h2,
 .externalMap h2 {
   margin: 6px 0 12px;
   color: var(--primary);
@@ -405,7 +506,6 @@ button {
 }
 
 .heritageIntro p,
-.spiritualBlock p,
 .cemeteryLead p {
   max-width: 780px;
   color: var(--text-secondary);
@@ -615,17 +715,17 @@ button {
 
 .placePin.heritage {
   background: var(--danger);
-  animation: pulseDanger 2s infinite;
+  animation: none;
 }
 
 .placePin.food {
   background: var(--warning);
-  animation: pulseWarning 2s infinite;
+  animation: none;
 }
 
 .placePin.specialty {
   background: var(--success);
-  animation: pulseSuccess 2s infinite;
+  animation: none;
 }
 
 @keyframes pulseDanger {
@@ -654,6 +754,12 @@ button {
 .placePin.active {
   outline: 4px solid rgba(139, 30, 30, 0.25);
   outline-offset: 4px;
+  animation: activePinPulse 620ms var(--ease-out-expo) 1;
+}
+
+@keyframes activePinPulse {
+  0% { box-shadow: 0 0 0 0 rgba(139, 30, 30, 0.5), var(--shadow-sm); }
+  100% { box-shadow: 0 0 0 12px rgba(139, 30, 30, 0), var(--shadow-md); }
 }
 
 /* Tooltip & Popups */
@@ -818,47 +924,65 @@ button {
 }
 
 .placeCard {
-  min-height: 112px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1.5px solid var(--border-color);
+  min-height: 330px;
+  display: grid;
+  grid-template-rows: 182px 1fr;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 10px;
+  overflow: hidden;
   text-align: left;
   background: #ffffff;
-  transition: all var(--transition-normal);
+  transition:
+    transform 240ms var(--ease-out-expo),
+    border-color 180ms ease,
+    box-shadow 240ms var(--ease-out-expo);
   box-shadow: var(--shadow-sm);
 }
 
 .placeCard > img {
-  width: 86px;
-  height: 86px;
-  flex: 0 0 86px;
-  border-radius: 6px;
+  width: 100%;
+  height: 182px;
+  display: block;
   object-fit: cover;
+  transition: transform 520ms var(--ease-out-expo);
 }
 
-.placeCard > span {
+.placeCardBody {
   min-width: 0;
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 18px;
 }
 
-.placeCard svg {
-  flex-shrink: 0;
+.placeCardKicker {
+  margin: 0 0 8px !important;
+  color: var(--primary) !important;
+  font-size: 10px !important;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.placeCardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 14px;
   color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
 }
-
-.placeCard.heritage svg { color: var(--danger); }
-.placeCard.food svg { color: var(--warning); }
-.placeCard.specialty svg { color: var(--success); }
 
 .placeCard.active,
 .placeCard:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   border-color: var(--primary);
-  background: var(--primary-light);
-  box-shadow: var(--shadow-md), 0 4px 12px rgba(139, 30, 30, 0.05);
+  box-shadow: var(--shadow-lg);
+}
+
+.placeCard:hover > img {
+  transform: scale(1.025);
 }
 
 .placeCard strong {
@@ -876,17 +1000,12 @@ button {
   line-height: 1.4;
 }
 
-/* Spiritual Blocks & CTA Links */
-.spiritualBlock,
+/* CTA Links */
 .externalMap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(200px, 300px);
   gap: 24px;
   align-items: center;
-}
-
-.spiritualBlock {
-  padding: clamp(24px, 4vw, 40px);
 }
 
 /* Video Frame & Placeholders */
@@ -1309,7 +1428,7 @@ button {
 .dot.special {
   border-color: var(--primary);
   background: #d33434;
-  animation: specialGlow 2.5s infinite;
+  animation: none;
 }
 
 @keyframes specialGlow {
@@ -1934,61 +2053,69 @@ dd {
 /* Site Footer */
 .siteFooter {
   display: grid;
-  grid-template-columns: minmax(200px, 1.2fr) repeat(3, minmax(160px, 1fr));
-  gap: 24px;
-  margin: 0 clamp(16px, 4vw, 36px) 36px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 24px;
-  color: var(--text-secondary);
-  background: #ffffff;
-  box-shadow: var(--shadow-sm);
+  grid-template-columns: minmax(260px, 1.4fr) minmax(220px, 1fr) minmax(260px, 1fr);
+  gap: clamp(24px, 5vw, 72px);
+  margin: 0;
+  padding: 28px clamp(20px, 5vw, 72px);
+  color: rgba(255, 255, 255, 0.72);
+  background: #25211d;
 }
 
 .siteFooter > div {
   min-width: 0;
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 6px;
 }
 
 .siteFooter strong {
-  color: var(--text-primary);
-  font-size: 15px;
+  color: #ffffff;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .siteFooter span {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.55;
 }
 
-.footerActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.footerAdmin {
-  min-height: 38px;
-  display: inline-flex;
+.footerIdentity {
+  grid-template-columns: 52px minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 0 14px;
-  color: var(--text-secondary);
-  background: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
-  transition: all var(--transition-fast);
+  gap: 14px !important;
 }
 
-.footerAdmin:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: var(--primary-light);
+.footerIdentity > img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 2px;
+}
+
+.footerIdentity > div {
+  display: grid;
+  gap: 3px;
+}
+
+.footerIdentity strong {
+  font-family: var(--font-serif);
+  font-size: 18px;
+}
+
+.footerGroup > p {
+  margin: 0 0 3px;
+  color: #d6aa76;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.footerContact small {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 10.5px;
 }
 
 /* Login Panel popup styles */
@@ -2250,6 +2377,23 @@ dd {
     font-size: 14.5px;
   }
 
+  .heroActions {
+    width: min(100%, 420px);
+    display: grid;
+    margin-top: 26px;
+  }
+
+  .heroPrimary,
+  .heroSecondary {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+  }
+
+  .heroSecondary {
+    backdrop-filter: none;
+  }
+
   .publicGrid,
   .adminGrid {
     grid-template-columns: 1fr;
@@ -2277,7 +2421,6 @@ dd {
   }
 
   .heritageIntro,
-  .spiritualBlock,
   .cemeteryLead,
   .externalMap {
     padding: 20px;
@@ -2285,13 +2428,11 @@ dd {
   }
 
   .heritageIntro p,
-  .spiritualBlock p,
   .cemeteryLead p {
     margin-left: auto;
     margin-right: auto;
   }
 
-  .spiritualBlock,
   .cemeteryLead,
   .externalMap {
     grid-template-columns: 1fr;
@@ -2300,14 +2441,24 @@ dd {
 
   .siteFooter {
     grid-template-columns: 1fr;
-    margin: 0 16px 16px;
-    padding: 20px;
-    text-align: center;
-    gap: 20px;
+    margin: 0;
+    padding: 24px 20px;
+    text-align: left;
+    gap: 18px;
   }
 
-  .footerActions {
-    justify-content: center;
+  .footerIdentity {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .footerIdentity > img {
+    width: 46px;
+    height: 46px;
+  }
+
+  .footerGroup {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 14px;
   }
 
   .heritageMap {
@@ -2352,13 +2503,24 @@ dd {
   }
 
   .placeCard {
-    min-height: 100px;
+    min-height: 118px;
+    grid-template-columns: 90px minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    align-items: stretch;
   }
 
   .placeCard > img {
-    width: 74px;
-    height: 74px;
-    flex-basis: 74px;
+    width: 90px;
+    height: 100%;
+    min-height: 118px;
+  }
+
+  .placeCardBody {
+    padding: 13px 14px;
+  }
+
+  .placeCardLink {
+    padding-top: 9px;
   }
 
   .heritageDetailHero {
@@ -2562,5 +2724,25 @@ dd {
   dl {
     grid-template-columns: 96px 1fr;
     text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .motion-ready .revealItem {
+    opacity: 1;
+    transform: none;
   }
 }

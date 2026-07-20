@@ -19,7 +19,7 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
       </header>
 
       <main className="heritageDetailPage">
-        <section className="heritageMeta" aria-label="Thông tin di tích">
+        <section className="heritageMeta" aria-label="Thông tin di tích" data-reveal>
           <div>
             <MapPin size={20} />
             <span><small>Địa điểm</small>{site.address}</span>
@@ -34,7 +34,7 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
           </div>
         </section>
 
-        <section className="heritageIntroBlock">
+        <section className="heritageIntroBlock" data-reveal>
           <div>
             <p className="eyebrow">Câu chuyện di sản</p>
             <h2>{site.fullTitle}</h2>
@@ -42,7 +42,7 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
           <p>{site.intro}</p>
         </section>
 
-        <section className="heritageFactRow">
+        <section className="heritageFactRow" data-reveal>
           {site.facts.map((fact) => (
             <div key={fact.label}>
               <strong>{fact.value}</strong>
@@ -53,7 +53,7 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
 
         <section className="heritageStoryGrid">
           {site.sections.map((section, index) => (
-            <article key={section.title} className={index % 2 ? "storyPanel reverse" : "storyPanel"}>
+            <article key={section.title} className={index % 2 ? "storyPanel reverse" : "storyPanel"} data-reveal>
               <div className="storyNumber">{String(index + 1).padStart(2, "0")}</div>
               <div>
                 <p className="eyebrow">{section.eyebrow}</p>
@@ -64,7 +64,7 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
           ))}
         </section>
 
-        <section className="heritageVideoSection">
+        <section className="heritageVideoSection" data-reveal>
           <div className="sectionHeading">
             <p className="eyebrow">Thuyết minh di tích</p>
             <h2>Câu chuyện qua hình ảnh</h2>
@@ -73,7 +73,7 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
           <VideoFrame url={site.youtubeUrl} title={`Video thuyết minh ${site.title}`} />
         </section>
 
-        <section className="heritageTimeline">
+        <section className="heritageTimeline" data-reveal>
           <div className="sectionHeading">
             <p className="eyebrow">Theo dòng lịch sử</p>
             <h2>Những mốc cần ghi nhớ</h2>
@@ -89,7 +89,7 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
           </div>
         </section>
 
-        <section className="heritageGallery">
+        <section className="heritageGallery" data-reveal>
           <div className="sectionHeading">
             <p className="eyebrow">Ảnh tư liệu</p>
             <h2>Di tích trong ký ức và hôm nay</h2>
@@ -104,7 +104,7 @@ export default function HeritageDetailPage({ site, onHome, footer }) {
           </div>
         </section>
 
-        <section className="heritageVisit">
+        <section className="heritageVisit" data-reveal>
           <div>
             <Landmark size={28} />
             <p className="eyebrow">Tham quan di tích</p>
