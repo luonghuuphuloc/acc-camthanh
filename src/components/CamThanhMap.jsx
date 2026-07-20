@@ -28,7 +28,6 @@ export default function CamThanhMap({ places, activeId, onSelect, onOpen }) {
     if (!containerRef.current || mapRef.current) return undefined;
 
     const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
-    const compactMap = window.matchMedia("(max-width: 700px)").matches;
     const map = L.map(containerRef.current, {
       preferCanvas: false,
       scrollWheelZoom: false,
@@ -70,18 +69,7 @@ export default function CamThanhMap({ places, activeId, onSelect, onOpen }) {
       },
     }).addTo(map);
 
-    const labelPlacements = compactMap
-      ? [
-          { direction: "top", offset: [0, -11] },
-          { direction: "top", offset: [-42, -11] },
-          { direction: "top", offset: [42, -11] },
-        ]
-      : [
-          { direction: "top", offset: [0, -11] },
-          { direction: "left", offset: [-11, 0] },
-          { direction: "right", offset: [11, 0] },
-        ];
-    for (const [index, place] of places.entries()) {
+    for (const place of places) {
       const marker = L.circleMarker([place.lat, place.lng], {
         radius: 9,
         color: "#ffffff",
@@ -105,15 +93,38 @@ export default function CamThanhMap({ places, activeId, onSelect, onOpen }) {
       popup.append(kicker, title, address, action);
 
       marker.bindPopup(popup, { closeButton: true, offset: [0, -4] });
-      const labelPlacement = labelPlacements[index % labelPlacements.length];
       marker.bindTooltip(place.name, {
         permanent: true,
-        direction: labelPlacement.direction,
-        offset: labelPlacement.offset,
+        direction: "top",
+        offset: [0, -12],
         className: "camThanhPlaceLabel",
         opacity: 1,
+        interactive: true,
       });
-      marker.on("click", () => onSelectRef.current?.(place.id));
+      const activatePlace = () => {
+        onSelectRef.current?.(place.id);
+        marker.openPopup();
+      };
+      const configureLabel = () => {
+        const labelElement = marker.getTooltip()?.getElement();
+        if (!labelElement || labelElement.dataset.clickReady) return;
+        labelElement.dataset.clickReady = "true";
+        labelElement.setAttribute("role", "button");
+        labelElement.setAttribute("tabindex", "0");
+        labelElement.setAttribute("aria-label", `Xem ${place.name}`);
+        L.DomEvent.on(labelElement, "click", (event) => {
+          L.DomEvent.stopPropagation(event);
+          activatePlace();
+        });
+        L.DomEvent.on(labelElement, "keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          L.DomEvent.preventDefault(event);
+          activatePlace();
+        });
+      };
+      marker.on("tooltipopen", configureLabel);
+      configureLabel();
+      marker.on("click", activatePlace);
       const markerElement = marker.getElement();
       if (markerElement) {
         markerElement.setAttribute("role", "button");

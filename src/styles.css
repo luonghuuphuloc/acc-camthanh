@@ -591,6 +591,17 @@ button {
   font-weight: 700;
   line-height: 1.35;
   text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.camThanhPlaceLabel:hover,
+.camThanhPlaceLabel:focus-visible {
+  border-color: rgba(139, 30, 30, 0.55);
+  box-shadow: 0 8px 20px rgba(42, 34, 26, 0.2);
+  transform: translateY(-1px);
+  outline: none;
 }
 
 .camThanhPlaceLabel.leaflet-tooltip-top::before {
@@ -1734,59 +1745,22 @@ dd {
 }
 
 .heritageDetailHero.cemeteryDetailHero > img {
-  object-position: center 42%;
-  filter: saturate(0.78) contrast(0.96) brightness(0.88);
+  object-position: center 48%;
+  filter: saturate(0.9) contrast(1.02) brightness(0.8);
 }
 
 .heritageDetailPage.cemeteryDetailPage {
   padding-bottom: 64px;
 }
 
-.heritageMeta.cemeteryMeta {
-  grid-template-columns: 1.35fr 0.9fr 0.75fr;
-}
-
-.heritageIntroBlock.cemeteryIntroBlock {
-  padding-bottom: clamp(52px, 7vw, 82px);
-}
-
 .cemeteryExplorer {
-  border-top: 1px solid var(--border-color);
-  padding: clamp(54px, 8vw, 88px) 0;
-}
-
-.cemeteryExplorerHeading {
-  display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr);
-  gap: clamp(28px, 6vw, 82px);
-  align-items: end;
-}
-
-.cemeteryExplorerHeading h2 {
-  margin: 6px 0 0;
-  color: var(--primary);
-  font-family: var(--font-serif);
-  font-size: clamp(28px, 4.2vw, 46px);
-  line-height: 1.16;
-}
-
-.cemeteryExplorerHeading > p {
-  max-width: 620px;
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 15px;
-  line-height: 1.8;
+  padding: clamp(32px, 5vw, 56px) 0;
 }
 
 .cemeterySearchBand {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(360px, 0.9fr);
-  gap: clamp(22px, 4vw, 56px);
-  align-items: center;
-  margin: 36px 0 24px;
-  border-top: 1px solid var(--border-color);
+  margin: 0 0 24px;
   border-bottom: 1px solid var(--border-color);
-  padding: 20px 0;
+  padding: 0 0 20px;
 }
 
 .cemeterySearchBox {
@@ -1797,6 +1771,12 @@ dd {
 .cemeteryStats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cemeteryHeroStats {
+  margin: 0;
+  border-bottom: 1px solid var(--border-color);
+  padding: 28px 0;
 }
 
 .cemeteryStats .stat {
@@ -2854,10 +2834,6 @@ dd {
     margin-top: -18px;
   }
 
-  .heritageMeta.cemeteryMeta {
-    grid-template-columns: 1fr;
-  }
-
   .heritageMeta > div {
     padding: 15px 16px;
   }
@@ -2873,27 +2849,20 @@ dd {
   }
 
   .cemeteryExplorer {
-    padding: 48px 0 56px;
+    padding: 28px 0 48px;
   }
 
-  .cemeteryExplorerHeading,
-  .cemeterySearchBand,
   .cemeteryWorkspace {
     grid-template-columns: 1fr;
   }
 
-  .cemeteryExplorerHeading {
-    gap: 18px;
-  }
-
-  .cemeteryExplorerHeading h2 {
-    font-size: 30px;
-  }
-
   .cemeterySearchBand {
-    gap: 18px;
-    margin: 28px 0 18px;
-    padding: 18px 0;
+    margin: 0 0 18px;
+    padding: 0 0 18px;
+  }
+
+  .cemeteryHeroStats {
+    padding: 22px 0;
   }
 
   .cemeteryStats .stat {

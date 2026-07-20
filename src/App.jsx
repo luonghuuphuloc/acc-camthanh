@@ -392,7 +392,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
   return (
     <>
       <header className="heritageDetailHero cemeteryDetailHero">
-        <img src="/quang-ngai-hero.png" alt="Thành phố Quảng Ngãi và núi Thiên Bút" />
+        <img src="/cemetery-hero.jpg" alt="Toàn cảnh Nghĩa trang Liệt sĩ Núi Thiên Bút" />
         <div className="heritageDetailShade" />
         <button className="detailBack" onClick={onHome}>
           <ArrowLeft size={18} /> Khám phá Cẩm Thành
@@ -405,44 +405,13 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
       </header>
 
       <main className="heritageDetailPage cemeteryDetailPage">
-        <section className="heritageMeta cemeteryMeta" aria-label="Thông tin nghĩa trang" data-reveal>
-          <div>
-            <MapPin size={20} />
-            <span><small>Địa điểm</small>Tổ 12, phường Cẩm Thành, tỉnh Quảng Ngãi</span>
-          </div>
-          <div>
-            <Search size={20} />
-            <span><small>Hồ sơ đã xác định</small>{stats.identified} / {stats.total} phần mộ</span>
-          </div>
-          <div>
-            <Star size={20} />
-            <span><small>Mộ đặc biệt</small>{stats.special} phần mộ</span>
-          </div>
-        </section>
-
-        <section className="heritageIntroBlock cemeteryIntroBlock" data-reveal>
-          <div>
-            <p className="eyebrow">Tri ân và tìm về</p>
-            <h2>Mỗi phần mộ, một địa chỉ ký ức</h2>
-          </div>
-          <p>
-            Sa bàn số hóa giúp thân nhân và người dân tra cứu hồ sơ, nhận biết đúng phân khu,
-            hàng mộ và vị trí an nghỉ của các Anh hùng Liệt sĩ trong khuôn viên nghĩa trang.
-          </p>
+        <section className="cemeteryStats cemeteryHeroStats" aria-label="Thống kê nghĩa trang" data-reveal>
+          <Stat label="Tổng mộ" value={stats.total} />
+          <Stat label="Đã xác định" value={stats.identified} />
+          <Stat label="Đặc biệt" value={stats.special} />
         </section>
 
         <section className="cemeteryExplorer">
-          <div className="cemeteryExplorerHeading">
-            <div>
-              <p className="eyebrow">Tra cứu phần mộ</p>
-              <h2>Sa bàn Nghĩa trang Liệt sĩ Núi Thiên Bút</h2>
-            </div>
-            <p>
-              Tìm theo họ tên, khu, hàng hoặc số mộ. Chọn một kết quả để xem hồ sơ và định vị
-              trực tiếp trên sa bàn.
-            </p>
-          </div>
-
           <div className="cemeterySearchBand">
             <div className="searchBox cemeterySearchBox">
               <Search size={18} />
@@ -452,11 +421,6 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
                   <X size={16} />
                 </button>
               )}
-            </div>
-            <div className="cemeteryStats" aria-label="Thống kê nghĩa trang">
-              <Stat label="Tổng mộ" value={stats.total} />
-              <Stat label="Đã xác định" value={stats.identified} />
-              <Stat label="Đặc biệt" value={stats.special} />
             </div>
           </div>
 
