@@ -159,9 +159,10 @@ function defaultSettings() {
     youtubeUrl: "https://www.youtube.com/watch?v=FiGZm_v72JI",
     mapImage: "/cemetery-map.jpg",
     footerAgency: "Đoàn phường Cẩm Thành",
-    footerAddress: "Phường Cẩm Thành, Quảng Ngãi",
-    footerPhone: "SĐT: đang cập nhật",
-    footerEmail: "Email: contact@accheritagepro.vn",
+    footerAddress: "Tổ 12, phường Cẩm Thành, tỉnh Quảng Ngãi",
+    footerPhone: "Điện thoại: 0255.2240904",
+    footerEmail: "Email: tuoitrecamthanh@gmail.com",
+    footerWebsite: "https://tuoitrecamthanh.com.vn",
     footerCopyright: "Bản quyền thuộc về ACC Heritage Pro",
   };
 }

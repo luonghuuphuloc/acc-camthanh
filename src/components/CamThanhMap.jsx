@@ -9,22 +9,33 @@ const ZONE_COLORS = [
   "#5f98b4", "#b993ac", "#82aaa6", "#c9ae68", "#8fa8bc",
 ];
 
-export default function CamThanhMap({ places, activeId, onSelect }) {
+export default function CamThanhMap({ places, activeId, onSelect, onOpen }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef(new Map());
   const onSelectRef = useRef(onSelect);
+  const onOpenRef = useRef(onOpen);
 
   useEffect(() => {
     onSelectRef.current = onSelect;
   }, [onSelect]);
 
   useEffect(() => {
+    onOpenRef.current = onOpen;
+  }, [onOpen]);
+
+  useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
 
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const compactMap = window.matchMedia("(max-width: 700px)").matches;
     const map = L.map(containerRef.current, {
-      preferCanvas: true,
+      preferCanvas: false,
       scrollWheelZoom: false,
+      dragging: !coarsePointer,
+      touchZoom: false,
+      doubleClickZoom: !coarsePointer,
+      boxZoom: !coarsePointer,
       zoomControl: true,
       attributionControl: true,
     });
@@ -59,7 +70,18 @@ export default function CamThanhMap({ places, activeId, onSelect }) {
       },
     }).addTo(map);
 
-    for (const place of places) {
+    const labelPlacements = compactMap
+      ? [
+          { direction: "top", offset: [0, -11] },
+          { direction: "top", offset: [-42, -11] },
+          { direction: "top", offset: [42, -11] },
+        ]
+      : [
+          { direction: "top", offset: [0, -11] },
+          { direction: "left", offset: [-11, 0] },
+          { direction: "right", offset: [11, 0] },
+        ];
+    for (const [index, place] of places.entries()) {
       const marker = L.circleMarker([place.lat, place.lng], {
         radius: 9,
         color: "#ffffff",
@@ -67,9 +89,43 @@ export default function CamThanhMap({ places, activeId, onSelect }) {
         fillColor: "#a52020",
         fillOpacity: 1,
       }).addTo(map);
-      marker.bindPopup(`<strong>${escapeHtml(place.name)}</strong><br><span>${escapeHtml(place.address)}</span>`);
-      marker.bindTooltip(place.name, { direction: "top", offset: [0, -8] });
+      const popup = document.createElement("div");
+      popup.className = "camThanhPlacePopup";
+      const kicker = document.createElement("small");
+      kicker.textContent = `Điểm di sản · Tổ ${place.to}`;
+      const title = document.createElement("strong");
+      title.textContent = place.name;
+      const address = document.createElement("span");
+      address.textContent = place.address;
+      const action = document.createElement("button");
+      action.type = "button";
+      action.textContent = "Khám phá địa điểm";
+      L.DomEvent.disableClickPropagation(action);
+      action.addEventListener("click", () => onOpenRef.current?.(place.id));
+      popup.append(kicker, title, address, action);
+
+      marker.bindPopup(popup, { closeButton: true, offset: [0, -4] });
+      const labelPlacement = labelPlacements[index % labelPlacements.length];
+      marker.bindTooltip(place.name, {
+        permanent: true,
+        direction: labelPlacement.direction,
+        offset: labelPlacement.offset,
+        className: "camThanhPlaceLabel",
+        opacity: 1,
+      });
       marker.on("click", () => onSelectRef.current?.(place.id));
+      const markerElement = marker.getElement();
+      if (markerElement) {
+        markerElement.setAttribute("role", "button");
+        markerElement.setAttribute("tabindex", "0");
+        markerElement.setAttribute("aria-label", `Xem ${place.name}`);
+        L.DomEvent.on(markerElement, "keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          L.DomEvent.preventDefault(event);
+          onSelectRef.current?.(place.id);
+          marker.openPopup();
+        });
+      }
       markersRef.current.set(place.id, marker);
     }
 
@@ -108,13 +164,4 @@ export default function CamThanhMap({ places, activeId, onSelect }) {
       aria-label="Bản đồ 15 tổ dân phố phường Cẩm Thành"
     />
   );
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }

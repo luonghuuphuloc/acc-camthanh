@@ -261,7 +261,11 @@ function HomePage({ settings, onCemetery, onHeritage }) {
             <CamThanhMap
               places={heritagePlaces}
               activeId={activeId}
-              onSelect={(id) => setActiveId(activeId === id ? null : id)}
+              onSelect={setActiveId}
+              onOpen={(id) => {
+                const place = heritagePlaces.find((item) => item.id === id);
+                if (place) openPlace(place);
+              }}
             />
             <div className="mapCaption">
               <MapPin size={16} />
@@ -316,6 +320,9 @@ function HomePage({ settings, onCemetery, onHeritage }) {
 function SiteFooter({ settings }) {
   const phone = settings.footerPhone?.trim();
   const showPhone = phone && !fold(phone).includes("dang cap nhat");
+  const email = settings.footerEmail?.trim() || "Email: tuoitrecamthanh@gmail.com";
+  const emailAddress = email.replace(/^email:\s*/i, "");
+  const website = settings.footerWebsite?.trim() || "https://tuoitrecamthanh.com.vn";
   return (
     <footer className="siteFooter" data-reveal>
       <div className="footerIdentity">
@@ -328,12 +335,15 @@ function SiteFooter({ settings }) {
       <div className="footerGroup">
         <p>Cơ quan quản lý</p>
         <strong>{settings.footerAgency || "Đoàn phường Cẩm Thành"}</strong>
-        <span>{settings.footerAddress || "Phường Cẩm Thành, Quảng Ngãi"}</span>
+        <span>{settings.footerAddress || "Tổ 12, phường Cẩm Thành, tỉnh Quảng Ngãi"}</span>
       </div>
       <div className="footerGroup footerContact">
         <p>Liên hệ</p>
-        {showPhone && <span>{phone}</span>}
-        <span>{settings.footerEmail || "Email: contact@accheritagepro.vn"}</span>
+        {showPhone && <a href={`tel:${phone.replace(/[^+\d]/g, "")}`}>{phone}</a>}
+        <a href={`mailto:${emailAddress}`}>{email}</a>
+        <a href={normalizeWebsite(website)} target="_blank" rel="noreferrer">
+          {displayWebsite(website)}
+        </a>
         <small>{settings.footerCopyright || "Bản quyền thuộc về ACC Heritage Pro"}</small>
       </div>
     </footer>
@@ -693,7 +703,16 @@ function AdminPage({ settings, setSettings, graves, setGraves, selectedId, setSe
                 value={settings.footerEmail || ""}
                 onChange={(event) => setSettings({ ...settings, footerEmail: event.target.value })}
                 onBlur={() => saveSettings(settings)}
-                placeholder="Email: contact@accheritagepro.vn"
+                placeholder="Email: tuoitrecamthanh@gmail.com"
+              />
+            </div>
+            <div className="toolGroup">
+              <label>Website</label>
+              <input
+                value={settings.footerWebsite || ""}
+                onChange={(event) => setSettings({ ...settings, footerWebsite: event.target.value })}
+                onBlur={() => saveSettings(settings)}
+                placeholder="https://tuoitrecamthanh.com.vn"
               />
             </div>
             <div className="toolGroup">
@@ -772,7 +791,6 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
   const viewRef = useRef({ zoom: 1, panX: 0, panY: 0 });
   const fitZoomRef = useRef(1);
   const frameRef = useRef(null);
-  const wheelTimerRef = useRef(null);
   const [dragId, setDragId] = useState(null);
   const [view, setView] = useState({ zoom: 1, panX: 0, panY: 0 });
   const selectedGrave = graves.find((grave) => grave.id === selectedId);
@@ -796,7 +814,6 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
     return () => {
       observer.disconnect();
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (wheelTimerRef.current) window.clearTimeout(wheelTimerRef.current);
     };
   }, []);
 
@@ -973,9 +990,10 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
 
   function handlePointerDown(event) {
     if (editable || event.target.closest?.(".mapControls")) return;
+    if (event.pointerType === "touch") return;
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     event.preventDefault();
     event.target.setPointerCapture?.(event.pointerId);
-    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     contentRef.current.style.willChange = "transform";
     if (pointersRef.current.size > 1) beginPinch();
     else beginPan({ x: event.clientX, y: event.clientY });
@@ -983,6 +1001,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
   }
 
   function handlePointerMove(event) {
+    if (event.pointerType === "touch") return;
     const gesture = gestureRef.current;
     if (!gesture || editable || !pointersRef.current.has(event.pointerId)) return;
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -1022,10 +1041,10 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
       setDragId(null);
       return;
     }
+    if (event.pointerType === "touch") return;
     pointersRef.current.delete(event.pointerId);
     if (pointersRef.current.size === 1) {
-      const pointer = [...pointersRef.current.values()][0];
-      beginPan(pointer);
+      beginPan([...pointersRef.current.values()][0]);
       return;
     }
     gestureRef.current = null;
@@ -1033,19 +1052,6 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
     if (didPanRef.current) lastPanEndRef.current = performance.now();
     didPanRef.current = false;
     commitView(viewRef.current);
-  }
-
-  function handleWheel(event) {
-    if (editable) return;
-    event.preventDefault();
-    const rect = ref.current.getBoundingClientRect();
-    const factor = Math.exp(-event.deltaY * 0.0015);
-    setZoom(viewRef.current.zoom * factor, {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    }, false);
-    if (wheelTimerRef.current) window.clearTimeout(wheelTimerRef.current);
-    wheelTimerRef.current = window.setTimeout(() => commitView(viewRef.current), 120);
   }
 
   function handleDoubleClick(event) {
@@ -1093,7 +1099,6 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
       className="cemeteryCanvas"
       ref={ref}
       onClick={handleCanvasClick}
-      onWheel={handleWheel}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onDoubleClick={handleDoubleClick}
@@ -1116,7 +1121,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
           <RotateCcw size={16} />
         </button>
       </div>
-      <div className="mapZoomHint">Kéo để di chuyển · Cuộn hoặc bấm +/- để phóng to</div>
+      <div className="mapZoomHint">Kéo để di chuyển · Bấm +/- để phóng to</div>
       <div
         className="cemeteryContent"
         ref={contentRef}
@@ -1494,6 +1499,14 @@ function fold(value) {
     .replace(/Đ/g, "D")
     .toLowerCase()
     .trim();
+}
+
+function normalizeWebsite(value) {
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+function displayWebsite(value) {
+  return value.replace(/^https?:\/\//i, "").replace(/\/$/, "");
 }
 
 function prioritizeGraves(graves) {
