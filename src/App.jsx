@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Download,
   Edit3,
-  Home,
   LocateFixed,
   Lock,
   MapPin,
@@ -352,22 +351,20 @@ function SiteFooter({ settings }) {
 
 function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, query, setQuery, stats, onHome }) {
   const [sheetOpen, setSheetOpen] = useState(Boolean(selectedId));
+  const [visibleCount, setVisibleCount] = useState(5);
   const results = useMemo(() => prioritizeGraves(searchGraves(graves, query)), [graves, query]);
   const defaultResults = useMemo(() => prioritizeGraves(graves), [graves]);
+  const visibleResults = query ? results : defaultResults;
   const mapSectionRef = useRef(null);
-
-  useEffect(() => {
-    if (!selectedId || !mapSectionRef.current) return;
-    if (!window.matchMedia("(max-width: 980px)").matches) return;
-    window.setTimeout(() => {
-      mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 180);
-  }, [selectedId]);
 
   useEffect(() => {
     if (selectedId) setSheetOpen(true);
     else setSheetOpen(false);
   }, [selectedId]);
+
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [query]);
 
   function clearSelectedGrave() {
     setSelectedId(null);
@@ -387,97 +384,157 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
 
   function showInternalRoute() {
     setSheetOpen(false);
-    window.setTimeout(() => {
-      mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 80);
+    window.requestAnimationFrame(() => {
+      mapSectionRef.current?.scrollIntoView({ behavior: "auto", block: "center" });
+    });
   }
 
   return (
     <>
-      <header className="topbar">
-        <div className="topbarBrand">
-          <img src="/cam-thanh-logo.png" alt="Logo Cẩm Thành" className="topbarLogo" />
-          <div>
-            <p className="eyebrow">Cẩm Thành số hóa</p>
-            <h1>{settings.cemeteryTitle}</h1>
-          </div>
-        </div>
-        <div className="navActions">
-          <button className="iconText" onClick={onHome}>
-            <Home size={18} /> Trang chủ
-          </button>
+      <header className="heritageDetailHero cemeteryDetailHero">
+        <img src="/quang-ngai-hero.png" alt="Thành phố Quảng Ngãi và núi Thiên Bút" />
+        <div className="heritageDetailShade" />
+        <button className="detailBack" onClick={onHome}>
+          <ArrowLeft size={18} /> Khám phá Cẩm Thành
+        </button>
+        <div className="heritageDetailTitle">
+          <p>Công trình thanh niên số hóa</p>
+          <h1>Nghĩa trang Liệt sĩ Núi Thiên Bút</h1>
+          <span>{settings.cemeteryIntro}</span>
         </div>
       </header>
 
-      <main className="publicGrid">
-        <section className="mapStage" ref={mapSectionRef}>
-          <CemeteryMap
-            settings={settings}
-            graves={graves.filter((grave) => grave.placed)}
-            selectedId={selectedId}
-            onSelect={selectGrave}
-            interactive
-            showRoute
-          />
+      <main className="heritageDetailPage cemeteryDetailPage">
+        <section className="heritageMeta cemeteryMeta" aria-label="Thông tin nghĩa trang" data-reveal>
+          <div>
+            <MapPin size={20} />
+            <span><small>Địa điểm</small>Tổ 12, phường Cẩm Thành, tỉnh Quảng Ngãi</span>
+          </div>
+          <div>
+            <Search size={20} />
+            <span><small>Hồ sơ đã xác định</small>{stats.identified} / {stats.total} phần mộ</span>
+          </div>
+          <div>
+            <Star size={20} />
+            <span><small>Mộ đặc biệt</small>{stats.special} phần mộ</span>
+          </div>
         </section>
 
-        <aside className="sidePanel">
-          <div className="searchBox">
-            <Search size={18} />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm họ tên, khu, hàng, mộ..." />
-            {query && (
-              <button className="ghostIcon" onClick={() => setQuery("")}>
-                <X size={16} />
-              </button>
-            )}
+        <section className="heritageIntroBlock cemeteryIntroBlock" data-reveal>
+          <div>
+            <p className="eyebrow">Tri ân và tìm về</p>
+            <h2>Mỗi phần mộ, một địa chỉ ký ức</h2>
+          </div>
+          <p>
+            Sa bàn số hóa giúp thân nhân và người dân tra cứu hồ sơ, nhận biết đúng phân khu,
+            hàng mộ và vị trí an nghỉ của các Anh hùng Liệt sĩ trong khuôn viên nghĩa trang.
+          </p>
+        </section>
+
+        <section className="cemeteryExplorer">
+          <div className="cemeteryExplorerHeading">
+            <div>
+              <p className="eyebrow">Tra cứu phần mộ</p>
+              <h2>Sa bàn Nghĩa trang Liệt sĩ Núi Thiên Bút</h2>
+            </div>
+            <p>
+              Tìm theo họ tên, khu, hàng hoặc số mộ. Chọn một kết quả để xem hồ sơ và định vị
+              trực tiếp trên sa bàn.
+            </p>
           </div>
 
-          <div className="statRow">
-            <Stat label="Tổng mộ" value={stats.total} />
-            <Stat label="Đã xác định" value={stats.identified} />
-            <Stat label="Đặc biệt" value={stats.special} />
+          <div className="cemeterySearchBand">
+            <div className="searchBox cemeterySearchBox">
+              <Search size={18} />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm họ tên, khu, hàng, mộ..." />
+              {query && (
+                <button className="ghostIcon" onClick={() => setQuery("")} aria-label="Xóa nội dung tìm kiếm">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            <div className="cemeteryStats" aria-label="Thống kê nghĩa trang">
+              <Stat label="Tổng mộ" value={stats.total} />
+              <Stat label="Đã xác định" value={stats.identified} />
+              <Stat label="Đặc biệt" value={stats.special} />
+            </div>
           </div>
 
-          <div className="resultList">
-            {(query ? results : defaultResults).map((grave) => (
-              <button className={grave.id === selectedId ? "resultItem active" : "resultItem"} key={grave.id} onClick={() => selectGrave(grave.id)}>
-                <span className={grave.type === "special" ? "dot special" : "dot"} />
-                <span>
-                  <strong>{grave.ten}</strong>
-                  <small>{graveLabel(grave)}</small>
+          <div className="cemeteryWorkspace">
+            <section className="mapStage" ref={mapSectionRef} aria-label="Sa bàn vị trí phần mộ">
+              <CemeteryMap
+                settings={settings}
+                graves={graves.filter((grave) => grave.placed)}
+                selectedId={selectedId}
+                onSelect={selectGrave}
+                interactive
+                showRoute
+              />
+            </section>
+
+            <aside className="sidePanel cemeteryResultsPanel">
+              <div className="cemeteryResultsHead">
+                <div>
+                  <p className="eyebrow">Danh sách phần mộ</p>
+                  <strong>{query ? `${results.length} kết quả phù hợp` : "Ưu tiên mộ đặc biệt"}</strong>
+                </div>
+                <span aria-live="polite">
+                  {Math.min(visibleCount, visibleResults.length)} / {visibleResults.length}
                 </span>
-              </button>
-            ))}
+              </div>
+
+              <div className="resultList publicResultList">
+                {visibleResults.slice(0, visibleCount).map((grave) => (
+                  <button className={grave.id === selectedId ? "resultItem active" : "resultItem"} key={grave.id} onClick={() => selectGrave(grave.id)}>
+                    <span className={grave.type === "special" ? "dot special" : "dot"} />
+                    <span>
+                      <strong>{grave.ten}</strong>
+                      <small>{graveLabel(grave)}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {visibleCount < visibleResults.length && (
+                <button className="loadMoreGraves" onClick={() => setVisibleCount((current) => current + 5)}>
+                  Xem thêm phần mộ <ChevronRight size={17} />
+                </button>
+              )}
+            </aside>
           </div>
+        </section>
 
-          {!selected && <EmptyProfile />}
-        </aside>
+        <ProfileSheet grave={sheetOpen ? selected : null} onClose={clearSelectedGrave} onGuide={showInternalRoute} />
+
+        <section className="heritageVideoSection cemeteryVideoSection" data-reveal>
+          <div className="sectionHeading">
+            <p className="eyebrow">Thuyết minh nghĩa trang</p>
+            <h2>Câu chuyện qua hình ảnh</h2>
+            <p>
+              Phim tư liệu giới thiệu không gian tưởng niệm và hành trình số hóa thông tin
+              tại Nghĩa trang Liệt sĩ Núi Thiên Bút.
+            </p>
+          </div>
+          <VideoFrame url={settings.youtubeUrl} title="Video thuyết minh Nghĩa trang Liệt sĩ Núi Thiên Bút" />
+        </section>
+
+        <section className="heritageVisit cemeteryVisit" data-reveal>
+          <div>
+            <MapPin size={28} />
+            <p className="eyebrow">Thăm viếng và tưởng niệm</p>
+            <h2>Đi đến đúng địa điểm</h2>
+            <p>Tổ 12, phường Cẩm Thành, tỉnh Quảng Ngãi</p>
+          </div>
+          <a
+            className="primaryBtn mapLink"
+            href="https://www.google.com/maps/search/?api=1&query=15.106445%2C108.8124696"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Navigation size={18} /> Mở Google Maps
+          </a>
+        </section>
       </main>
-
-      <ProfileSheet grave={sheetOpen ? selected : null} onClose={clearSelectedGrave} onGuide={showInternalRoute} />
-
-      <section className="cemeteryLead" data-reveal>
-        <div>
-          <p className="eyebrow">Giới thiệu và thuyết minh</p>
-          <p>{settings.cemeteryIntro}</p>
-        </div>
-        <VideoFrame url={settings.youtubeUrl} title="Video thuyết minh Nghĩa trang Liệt sĩ Núi Thiên Bút" />
-      </section>
-
-      <section className="externalMap" data-reveal>
-        <div>
-          <p className="eyebrow">Chỉ đường ngoại khu</p>
-          <h2>Google Maps đến Nghĩa trang Liệt sĩ Núi Thiên Bút</h2>
-        </div>
-        <a
-          className="primaryBtn mapLink"
-          href="https://www.google.com/maps/search/?api=1&query=15.106445%2C108.8124696"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <Navigation size={18} /> Mở Google Maps
-        </a>
-      </section>
 
       <SiteFooter settings={settings} />
     </>
@@ -1257,15 +1314,6 @@ function AdminEditor({ grave, updateGrave }) {
   );
 }
 
-function EmptyProfile() {
-  return (
-    <div className="emptyProfile">
-      <MapPin size={24} />
-      <p>Chọn một mộ trên danh sách hoặc sa bàn để xem hồ sơ.</p>
-    </div>
-  );
-}
-
 function ProfileSheet({ grave, onClose, onGuide }) {
   const [qrBusy, setQrBusy] = useState(false);
   const closeRef = useRef(null);
@@ -1273,16 +1321,33 @@ function ProfileSheet({ grave, onClose, onGuide }) {
   useEffect(() => {
     if (!grave) return undefined;
     const previousFocus = document.activeElement;
+    const lockedScrollY = window.scrollY;
+    const previousBodyStyle = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    };
     const handleKeyDown = (event) => {
       if (event.key === "Escape") onClose();
     };
     document.body.classList.add("sheetOpen");
+    Object.assign(document.body.style, {
+      position: "fixed",
+      top: `-${lockedScrollY}px`,
+      left: "0",
+      right: "0",
+      width: "100%",
+    });
     document.addEventListener("keydown", handleKeyDown);
-    window.requestAnimationFrame(() => closeRef.current?.focus());
+    window.requestAnimationFrame(() => closeRef.current?.focus({ preventScroll: true }));
     return () => {
       document.body.classList.remove("sheetOpen");
+      Object.assign(document.body.style, previousBodyStyle);
+      window.scrollTo({ top: lockedScrollY, behavior: "instant" });
       document.removeEventListener("keydown", handleKeyDown);
-      previousFocus?.focus?.();
+      previousFocus?.focus?.({ preventScroll: true });
     };
   }, [grave?.id]);
 
