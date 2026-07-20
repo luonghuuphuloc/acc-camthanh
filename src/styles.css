@@ -44,9 +44,9 @@
 
   /* Transitions */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-normal: 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
+  --transition-slow: 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.22, 0.61, 0.36, 1);
   
   color: var(--text-primary);
   background: var(--bg-primary);
@@ -87,37 +87,37 @@ body.sheetOpen {
 
 .routeView {
   min-height: 100vh;
-  animation: routeEnter 300ms var(--ease-out-expo) both;
+  animation: routeEnter 440ms var(--ease-out-expo) both;
 }
 
 @keyframes routeEnter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 ::view-transition-old(root) {
-  animation: 160ms ease-in both routeExit;
+  animation: 220ms ease-in both routeExit;
 }
 
 ::view-transition-new(root) {
-  animation: 320ms var(--ease-out-expo) both routeEnter;
+  animation: 460ms var(--ease-out-expo) both routeEnter;
 }
 
 @keyframes routeExit {
-  to { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 0; }
 }
 
 .motion-ready .revealItem {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(10px);
 }
 
 .motion-ready .revealItem.revealVisible {
   opacity: 1;
   transform: translateY(0);
   transition:
-    opacity 420ms var(--ease-out-expo) var(--reveal-delay, 0ms),
-    transform 420ms var(--ease-out-expo) var(--reveal-delay, 0ms);
+    opacity 620ms var(--ease-out-expo) var(--reveal-delay, 0ms),
+    transform 620ms var(--ease-out-expo) var(--reveal-delay, 0ms);
 }
 
 :where(button, a, input, textarea):focus-visible {
@@ -326,17 +326,17 @@ button {
   height: 100%;
   object-fit: cover;
   filter: saturate(0.85) sepia(0.12) contrast(0.95) brightness(0.88);
-  transition: transform 6s ease-out;
-  animation: heroSettle 1400ms var(--ease-out-expo) both;
+  transition: transform 8s ease-out;
+  animation: heroSettle 2400ms var(--ease-out-expo) both;
 }
 
 @keyframes heroSettle {
-  from { transform: scale(1.035); }
+  from { transform: scale(1.02); }
   to { transform: scale(1); }
 }
 
 .heroImage:hover img {
-  transform: scale(1.06);
+  transform: scale(1.025);
 }
 
 .heroImage::after {
@@ -607,12 +607,12 @@ button {
   border-radius: 999px;
   background: linear-gradient(180deg, #7ad1e4 0%, #a4e3ee 100%);
   box-shadow: inset 0 -8px 20px rgba(37, 99, 124, 0.15), 0 4px 12px rgba(122, 209, 228, 0.25);
-  animation: riverFlow 12s ease-in-out infinite alternate;
+  animation: riverFlow 24s ease-in-out infinite alternate;
 }
 
 @keyframes riverFlow {
   0% { transform: rotate(-6deg) translateY(0); }
-  100% { transform: rotate(-5deg) translateY(4px); }
+  100% { transform: rotate(-5.5deg) translateY(2px); }
 }
 
 .mapRiver span {
@@ -1512,26 +1512,44 @@ button {
 .sheetScrim {
   position: fixed;
   inset: 0;
+  min-height: 100dvh;
   z-index: 60;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(42, 34, 26, 0.35);
-  backdrop-filter: blur(4px);
-  animation: fadeIn var(--transition-fast) ease-out;
+  background: rgba(42, 34, 26, 0.32);
+  backdrop-filter: blur(3px);
+  animation: sheetScrimIn 280ms ease-out both;
 }
 
 .profileSheet {
   position: relative;
   width: min(720px, calc(100vw - 24px));
-  max-height: min(80vh, 660px);
+  max-height: min(80dvh, 660px);
   overflow-y: auto;
   border: 1px solid var(--border-color);
   border-radius: 20px 20px 0 0;
   padding: 24px;
   background: #ffffff;
   box-shadow: 0 -10px 40px rgba(42, 34, 26, 0.15);
-  animation: sheetUp var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1);
+  overscroll-behavior: contain;
+  animation: sheetUp 420ms var(--ease-out-expo) both;
+}
+
+@keyframes sheetScrimIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sheetUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .sheetHandle {
@@ -2706,11 +2724,11 @@ dd {
 
   .profileSheet {
     width: 100%;
-    max-height: 74vh;
+    max-height: 74dvh;
     border-right: 0;
     border-left: 0;
     border-bottom: 0;
-    padding: 20px 16px;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
   }
 
   .sheetActions {

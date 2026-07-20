@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import QRCode from "qrcode";
 import {
   ArrowLeft,
@@ -1290,7 +1290,7 @@ function ProfileSheet({ grave, onClose, onGuide }) {
     }
   }
 
-  return (
+  return createPortal(
     <div className="sheetScrim" onClick={(event) => event.target === event.currentTarget && onClose()}>
       <article
         className="profileSheet"
@@ -1325,7 +1325,8 @@ function ProfileSheet({ grave, onClose, onGuide }) {
           </button>
         </div>
       </article>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
