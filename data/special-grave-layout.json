@@ -3,6 +3,7 @@
   "mapHeight": 1315,
   "source": "Reviewed cemetery layout images, July 2026",
   "positions": [
+    { "khu": "TĐ B", "hang": 1, "mo": 1, "x": 33.262, "y": 40.684 },
     { "khu": "TĐ B", "hang": 1, "mo": 2, "x": 30.957, "y": 40.684 },
     { "khu": "TĐ B", "hang": 1, "mo": 3, "x": 28.633, "y": 40.684 },
     { "khu": "TĐ B", "hang": 1, "mo": 4, "x": 26.328, "y": 40.684 },

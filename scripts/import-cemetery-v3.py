@@ -23,6 +23,7 @@ from openpyxl import load_workbook
 ROOT = Path(__file__).resolve().parents[1]
 GRAVES_PATH = ROOT / "data" / "graves.json"
 SPECIAL_LAYOUT_PATH = ROOT / "data" / "special-grave-layout.json"
+SUPPLEMENTAL_GRAVES_PATH = ROOT / "data" / "supplemental-graves.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -165,6 +166,23 @@ def main() -> None:
         if not old:
             added += 1
         rows.append(record)
+
+    supplemental = json.loads(SUPPLEMENTAL_GRAVES_PATH.read_text(encoding="utf-8"))
+    imported_ids = {item["id"] for item in rows}
+    for source in supplemental:
+        if source["id"] in imported_ids:
+            continue
+        record = dict(source)
+        position = special_layout.get(
+            (normalize(record["khu"]), int(record["hang"]), int(record["mo"]))
+        )
+        if not position:
+            raise ValueError(f"Missing reviewed position for supplemental grave: {record['id']}")
+        record["x"], record["y"] = position
+        record["placed"] = True
+        rows.append(record)
+        imported_ids.add(record["id"])
+        added += 1
 
     rows.sort(key=lambda item: (int(item.get("tt") or 9999), item["id"]))
     duplicate_ids = sorted({item["id"] for item in rows if sum(1 for candidate in rows if candidate["id"] == item["id"]) > 1})
