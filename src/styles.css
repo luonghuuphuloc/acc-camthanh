@@ -1149,7 +1149,7 @@ button {
   width: 100%;
   aspect-ratio: 2560 / 1315;
   overflow: clip;
-  touch-action: auto;
+  touch-action: pan-y;
   background: #f1ebd9;
   cursor: grab;
 }
@@ -1757,15 +1757,14 @@ dd {
   padding: clamp(32px, 5vw, 56px) 0;
 }
 
-.cemeterySearchBand {
-  margin: 0 0 24px;
-  border-bottom: 1px solid var(--border-color);
-  padding: 0 0 20px;
-}
-
 .cemeterySearchBox {
   height: 52px;
   border-radius: 8px;
+}
+
+.cemeteryPanelSearch {
+  flex: 0 0 auto;
+  margin-bottom: 16px;
 }
 
 .cemeteryStats {
@@ -1846,10 +1845,17 @@ dd {
   font-weight: 700;
 }
 
-.publicResultList {
-  max-height: none;
-  overflow: visible;
-  padding-right: 0;
+.cemeteryResultsPanel .publicResultList {
+  max-height: min(52vh, 520px);
+  overflow-y: auto;
+  padding-right: 4px;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cemeteryResultsPanel .publicResultList:focus-visible {
+  outline: 2px solid rgba(139, 30, 30, 0.35);
+  outline-offset: 4px;
 }
 
 .publicResultList .resultItem {
@@ -2854,11 +2860,6 @@ dd {
 
   .cemeteryWorkspace {
     grid-template-columns: 1fr;
-  }
-
-  .cemeterySearchBand {
-    margin: 0 0 18px;
-    padding: 0 0 18px;
   }
 
   .cemeteryHeroStats {

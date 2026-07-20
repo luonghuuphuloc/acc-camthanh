@@ -412,18 +412,6 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
         </section>
 
         <section className="cemeteryExplorer">
-          <div className="cemeterySearchBand">
-            <div className="searchBox cemeterySearchBox">
-              <Search size={18} />
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm họ tên, khu, hàng, mộ..." />
-              {query && (
-                <button className="ghostIcon" onClick={() => setQuery("")} aria-label="Xóa nội dung tìm kiếm">
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-          </div>
-
           <div className="cemeteryWorkspace">
             <section className="mapStage" ref={mapSectionRef} aria-label="Sa bàn vị trí phần mộ">
               <CemeteryMap
@@ -437,6 +425,15 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
             </section>
 
             <aside className="sidePanel cemeteryResultsPanel">
+              <div className="searchBox cemeterySearchBox cemeteryPanelSearch">
+                <Search size={18} />
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm họ tên, khu, hàng, mộ..." />
+                {query && (
+                  <button className="ghostIcon" onClick={() => setQuery("")} aria-label="Xóa nội dung tìm kiếm">
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
               <div className="cemeteryResultsHead">
                 <div>
                   <p className="eyebrow">Danh sách phần mộ</p>
@@ -447,7 +444,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
                 </span>
               </div>
 
-              <div className="resultList publicResultList">
+              <div className="resultList publicResultList" role="region" aria-label="Danh sách phần mộ" tabIndex={0}>
                 {visibleResults.slice(0, visibleCount).map((grave) => (
                   <button className={grave.id === selectedId ? "resultItem active" : "resultItem"} key={grave.id} onClick={() => selectGrave(grave.id)}>
                     <span className={grave.type === "special" ? "dot special" : "dot"} />
@@ -1012,8 +1009,8 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
 
   function handlePointerDown(event) {
     if (editable || event.target.closest?.(".mapControls")) return;
-    if (event.pointerType === "touch" && !touchMode) return;
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (event.pointerType === "touch" && !touchMode && pointersRef.current.size < 2) return;
     event.preventDefault();
     event.target.setPointerCapture?.(event.pointerId);
     contentRef.current.style.willChange = "transform";
@@ -1023,9 +1020,10 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
   }
 
   function handlePointerMove(event) {
-    if (event.pointerType === "touch" && !touchMode) return;
+    if (event.pointerType === "touch" && !touchMode && pointersRef.current.size < 2) return;
     const gesture = gestureRef.current;
     if (!gesture || editable || !pointersRef.current.has(event.pointerId)) return;
+    event.preventDefault();
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
     if (pointersRef.current.size > 1) {
@@ -1063,8 +1061,15 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
       setDragId(null);
       return;
     }
-    if (event.pointerType === "touch" && !touchMode) return;
+    const passiveTouch = event.pointerType === "touch" && !touchMode;
     pointersRef.current.delete(event.pointerId);
+    if (passiveTouch && gestureRef.current?.type !== "pinch") return;
+    if (passiveTouch) {
+      gestureRef.current = null;
+      contentRef.current.style.willChange = "auto";
+      commitView(viewRef.current);
+      return;
+    }
     if (pointersRef.current.size === 1) {
       beginPan([...pointersRef.current.values()][0]);
       return;
