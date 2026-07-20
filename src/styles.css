@@ -972,6 +972,8 @@ button {
   height: 100%;
   transform-origin: 0 0;
   will-change: auto;
+  contain: layout paint style;
+  backface-visibility: hidden;
 }
 
 .cemeteryContent img {
@@ -1070,7 +1072,6 @@ button {
   padding: 6px 12px;
   color: #0b5161;
   background: rgba(224, 251, 255, 0.95);
-  backdrop-filter: blur(4px);
   border: 1px solid rgba(14, 165, 233, 0.3);
   box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
   font-size: 11px;
@@ -1108,6 +1109,7 @@ button {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   padding: 0;
   transition: transform var(--transition-fast), border-color var(--transition-fast);
+  contain: layout paint style;
 }
 
 .graveMarker::before {
@@ -2521,6 +2523,10 @@ dd {
 
   .mapControls button:hover {
     transform: none;
+  }
+
+  .mapControls button {
+    backdrop-filter: none;
   }
 
   .mapZoomHint {

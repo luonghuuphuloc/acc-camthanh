@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import QRCode from "qrcode";
 import {
@@ -753,9 +753,38 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
   const contentRef = useRef(null);
   const gestureRef = useRef(null);
   const didPanRef = useRef(false);
+  const lastPanEndRef = useRef(0);
+  const pointersRef = useRef(new Map());
+  const viewRef = useRef({ zoom: 1, panX: 0, panY: 0 });
+  const fitZoomRef = useRef(1);
+  const frameRef = useRef(null);
+  const wheelTimerRef = useRef(null);
   const [dragId, setDragId] = useState(null);
   const [view, setView] = useState({ zoom: 1, panX: 0, panY: 0 });
   const selectedGrave = graves.find((grave) => grave.id === selectedId);
+
+  useLayoutEffect(() => {
+    const viewport = ref.current;
+    if (!viewport) return undefined;
+
+    const fitView = getFitView();
+    fitZoomRef.current = fitView.zoom;
+    commitView(fitView);
+
+    const observer = new ResizeObserver(() => {
+      const wasAtFit = Math.abs(viewRef.current.zoom - fitZoomRef.current) < 0.02;
+      const nextFit = getFitView();
+      fitZoomRef.current = nextFit.zoom;
+      commitView(wasAtFit ? nextFit : viewRef.current);
+    });
+    observer.observe(viewport);
+
+    return () => {
+      observer.disconnect();
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (wheelTimerRef.current) window.clearTimeout(wheelTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!selectedGrave?.placed || editable) return;
@@ -781,25 +810,74 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
     };
   }
 
-  function setZoom(nextZoom, anchor) {
+  function getFitView() {
+    const viewport = ref.current;
+    const content = contentRef.current;
+    if (!viewport || !content) return { zoom: 1, panX: 0, panY: 0 };
+    const baseW = content.offsetWidth || viewport.clientWidth;
+    const baseH = content.offsetHeight || viewport.clientHeight;
+    const zoom = Math.min(1, viewport.clientWidth / baseW, viewport.clientHeight / baseH);
+    return {
+      zoom,
+      panX: (viewport.clientWidth - baseW * zoom) / 2,
+      panY: (viewport.clientHeight - baseH * zoom) / 2,
+    };
+  }
+
+  function writeTransform(nextView) {
+    if (!contentRef.current) return;
+    contentRef.current.style.transform = `translate3d(${nextView.panX}px, ${nextView.panY}px, 0) scale(${nextView.zoom})`;
+  }
+
+  function commitView(nextView) {
+    const clamped = clampView(nextView);
+    viewRef.current = clamped;
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
+    writeTransform(clamped);
+    setView((current) => (
+      Math.abs(current.zoom - clamped.zoom) < 0.0001
+      && Math.abs(current.panX - clamped.panX) < 0.1
+      && Math.abs(current.panY - clamped.panY) < 0.1
+        ? current
+        : clamped
+    ));
+    return clamped;
+  }
+
+  function scheduleView(nextView) {
+    viewRef.current = clampView(nextView);
+    if (frameRef.current) return viewRef.current;
+    frameRef.current = requestAnimationFrame(() => {
+      writeTransform(viewRef.current);
+      frameRef.current = null;
+    });
+    return viewRef.current;
+  }
+
+  function setZoom(nextZoom, anchor, commit = true) {
     const viewport = ref.current;
     if (!viewport) return;
     const rect = viewport.getBoundingClientRect();
-    const zoom = clamp(nextZoom, 1, 5);
+    const zoom = clamp(nextZoom, fitZoomRef.current, 4.5);
     const point = anchor || { x: rect.width / 2, y: rect.height / 2 };
-    setView((current) => {
-      const localX = (point.x - current.panX) / current.zoom;
-      const localY = (point.y - current.panY) / current.zoom;
-      return clampView({
-        zoom,
-        panX: point.x - localX * zoom,
-        panY: point.y - localY * zoom,
-      });
-    });
+    const current = viewRef.current;
+    const localX = (point.x - current.panX) / current.zoom;
+    const localY = (point.y - current.panY) / current.zoom;
+    const nextView = {
+      zoom,
+      panX: point.x - localX * zoom,
+      panY: point.y - localY * zoom,
+    };
+    return commit ? commitView(nextView) : scheduleView(nextView);
   }
 
   function resetView() {
-    setView({ zoom: 1, panX: 0, panY: 0 });
+    const fitView = getFitView();
+    fitZoomRef.current = fitView.zoom;
+    commitView(fitView);
   }
 
   function focusGrave(grave, zoom = 2.65) {
@@ -808,13 +886,42 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
     if (!viewport || !content || !Number.isFinite(grave.x) || !Number.isFinite(grave.y)) return;
     const baseW = content.offsetWidth || viewport.clientWidth;
     const baseH = content.offsetHeight || viewport.clientHeight;
-    setView(
-      clampView({
+    commitView(
+      {
         zoom,
         panX: viewport.clientWidth / 2 - (grave.x / 100) * baseW * zoom,
         panY: viewport.clientHeight / 2 - (grave.y / 100) * baseH * zoom,
-      }),
+      },
     );
+  }
+
+  function beginPan(pointer) {
+    gestureRef.current = {
+      type: "pan",
+      x: pointer.x,
+      y: pointer.y,
+      view: { ...viewRef.current },
+    };
+  }
+
+  function beginPinch() {
+    const viewport = ref.current;
+    const pointers = [...pointersRef.current.values()];
+    if (!viewport || pointers.length < 2) return;
+    const [first, second] = pointers;
+    const rect = viewport.getBoundingClientRect();
+    const center = {
+      x: (first.x + second.x) / 2 - rect.left,
+      y: (first.y + second.y) / 2 - rect.top,
+    };
+    const current = viewRef.current;
+    gestureRef.current = {
+      type: "pinch",
+      distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)),
+      zoom: current.zoom,
+      localX: (center.x - current.panX) / current.zoom,
+      localY: (center.y - current.panY) / current.zoom,
+    };
   }
 
   function pointFromEvent(event) {
@@ -839,10 +946,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
 
   function handleCanvasClick(event) {
     if (!editable) {
-      if (didPanRef.current) {
-        didPanRef.current = false;
-        return;
-      }
+      if (performance.now() - lastPanEndRef.current < 180) return;
       if (selectedId && interactive && !event.target.closest?.(".graveMarker") && !event.target.closest?.(".mapControls")) {
         onSelect(null);
       }
@@ -854,48 +958,121 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
   }
 
   function handlePointerDown(event) {
-    if (editable || event.target.closest?.(".graveMarker") || event.target.closest?.(".mapControls")) return;
+    if (editable || event.target.closest?.(".mapControls")) return;
     event.preventDefault();
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    gestureRef.current = {
-      x: event.clientX,
-      y: event.clientY,
-      panX: view.panX,
-      panY: view.panY,
-    };
+    event.target.setPointerCapture?.(event.pointerId);
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    contentRef.current.style.willChange = "transform";
+    if (pointersRef.current.size > 1) beginPinch();
+    else beginPan({ x: event.clientX, y: event.clientY });
     didPanRef.current = false;
   }
 
   function handlePointerMove(event) {
     const gesture = gestureRef.current;
-    if (!gesture || editable) return;
-    if (Math.abs(event.clientX - gesture.x) + Math.abs(event.clientY - gesture.y) > 6) {
+    if (!gesture || editable || !pointersRef.current.has(event.pointerId)) return;
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (pointersRef.current.size > 1) {
+      if (gesture.type !== "pinch") beginPinch();
+      const pinch = gestureRef.current;
+      const pointers = [...pointersRef.current.values()];
+      const [first, second] = pointers;
+      const rect = ref.current.getBoundingClientRect();
+      const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+      const centerX = (first.x + second.x) / 2 - rect.left;
+      const centerY = (first.y + second.y) / 2 - rect.top;
+      const zoom = clamp(pinch.zoom * (distance / pinch.distance), fitZoomRef.current, 4.5);
       didPanRef.current = true;
+      scheduleView({
+        zoom,
+        panX: centerX - pinch.localX * zoom,
+        panY: centerY - pinch.localY * zoom,
+      });
+      return;
     }
-    setView(
-      clampView({
-        zoom: view.zoom,
-        panX: gesture.panX + event.clientX - gesture.x,
-        panY: gesture.panY + event.clientY - gesture.y,
-      }),
-    );
+
+    if (gesture.type !== "pan") beginPan({ x: event.clientX, y: event.clientY });
+    const pan = gestureRef.current;
+    if (Math.abs(event.clientX - pan.x) + Math.abs(event.clientY - pan.y) > 6) didPanRef.current = true;
+    scheduleView({
+      zoom: pan.view.zoom,
+      panX: pan.view.panX + event.clientX - pan.x,
+      panY: pan.view.panY + event.clientY - pan.y,
+    });
   }
 
   function handlePointerUp(event) {
-    if (dragId && onMove) onMove(dragId, pointFromEvent(event));
-    setDragId(null);
+    if (editable) {
+      if (dragId && onMove) onMove(dragId, pointFromEvent(event));
+      setDragId(null);
+      return;
+    }
+    pointersRef.current.delete(event.pointerId);
+    if (pointersRef.current.size === 1) {
+      const pointer = [...pointersRef.current.values()][0];
+      beginPan(pointer);
+      return;
+    }
     gestureRef.current = null;
+    contentRef.current.style.willChange = "auto";
+    if (didPanRef.current) lastPanEndRef.current = performance.now();
+    didPanRef.current = false;
+    commitView(viewRef.current);
   }
 
   function handleWheel(event) {
     if (editable) return;
     event.preventDefault();
     const rect = ref.current.getBoundingClientRect();
-    setZoom(view.zoom * (event.deltaY > 0 ? 0.86 : 1.16), {
+    const factor = Math.exp(-event.deltaY * 0.0015);
+    setZoom(viewRef.current.zoom * factor, {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    }, false);
+    if (wheelTimerRef.current) window.clearTimeout(wheelTimerRef.current);
+    wheelTimerRef.current = window.setTimeout(() => commitView(viewRef.current), 120);
+  }
+
+  function handleDoubleClick(event) {
+    if (editable || event.target.closest?.(".mapControls")) return;
+    event.preventDefault();
+    const rect = ref.current.getBoundingClientRect();
+    setZoom(viewRef.current.zoom * 1.6, {
       x: event.clientX - rect.left,
       y: event.clientY - rect.top,
     });
   }
+
+  const graveMarkers = useMemo(() => graves
+    .filter((grave) => grave.placed && Number.isFinite(grave.x) && Number.isFinite(grave.y))
+    .map((grave) => (
+      <button
+        key={grave.id}
+        draggable={editable}
+        data-grave-id={grave.id}
+        onDragStart={(event) => event.dataTransfer.setData("text/plain", grave.id)}
+        onPointerDown={(event) => {
+          if (!editable) return;
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+          setDragId(grave.id);
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (performance.now() - lastPanEndRef.current < 180) return;
+          if (interactive) onSelect(grave.id);
+        }}
+        className={[
+          "graveMarker",
+          grave.type === "special" ? "special" : "",
+          grave.id === selectedId ? "selected" : "",
+        ].join(" ")}
+        style={{ left: `${grave.x}%`, top: `${grave.y}%` }}
+        title={`${grave.ten} - ${graveLabel(grave)}`}
+      >
+        {grave.type === "special" ? <Star size={11} /> : null}
+      </button>
+    )), [graves, selectedId, editable, interactive, onSelect]);
 
   return (
     <div
@@ -905,6 +1082,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
       onWheel={handleWheel}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
+      onDoubleClick={handleDoubleClick}
       onDragOver={(event) => event.preventDefault()}
       onDrop={drop}
       onPointerUp={handlePointerUp}
@@ -914,10 +1092,10 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
         <button type="button" onClick={() => selectedGrave ? focusGrave(selectedGrave, 2.65) : resetView()} title={selectedGrave ? "Tới mộ đang chọn" : "Về toàn cảnh"}>
           <LocateFixed size={17} />
         </button>
-        <button type="button" onClick={() => setZoom(view.zoom * 1.18)} title="Phóng to">
+        <button type="button" onClick={() => setZoom(viewRef.current.zoom * 1.35)} title="Phóng to">
           <Plus size={17} />
         </button>
-        <button type="button" onClick={() => setZoom(view.zoom * 0.84)} title="Thu nhỏ">
+        <button type="button" onClick={() => setZoom(viewRef.current.zoom * 0.74)} title="Thu nhỏ">
           <Minus size={17} />
         </button>
         <button type="button" onClick={resetView} title="Về toàn cảnh">
@@ -928,7 +1106,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
       <div
         className="cemeteryContent"
         ref={contentRef}
-        style={{ transform: `translate(${view.panX}px, ${view.panY}px) scale(${view.zoom})` }}
+        style={{ transform: `translate3d(${view.panX}px, ${view.panY}px, 0) scale(${view.zoom})` }}
       >
         <img src={settings.mapImage} alt="Sơ đồ nghĩa trang" draggable={false} />
         <div className="youAreHere">
@@ -940,33 +1118,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
             <polyline points={`42,82 42,67 ${selectedGrave.x},67 ${selectedGrave.x},${selectedGrave.y}`} />
           </svg>
         )}
-        {graves
-          .filter((grave) => grave.placed && Number.isFinite(grave.x) && Number.isFinite(grave.y))
-          .map((grave) => (
-            <button
-              key={grave.id}
-              draggable={editable}
-              onDragStart={(event) => event.dataTransfer.setData("text/plain", grave.id)}
-              onPointerDown={(event) => {
-                if (!editable) return;
-                event.currentTarget.setPointerCapture?.(event.pointerId);
-                setDragId(grave.id);
-              }}
-              onClick={(event) => {
-                event.stopPropagation();
-                if (interactive) onSelect(grave.id);
-              }}
-              className={[
-                "graveMarker",
-                grave.type === "special" ? "special" : "",
-                grave.id === selectedId ? "selected" : "",
-              ].join(" ")}
-              style={{ left: `${grave.x}%`, top: `${grave.y}%` }}
-              title={`${grave.ten} - ${graveLabel(grave)}`}
-            >
-              {grave.type === "special" ? <Star size={11} /> : null}
-            </button>
-          ))}
+        {graveMarkers}
       </div>
     </div>
   );
