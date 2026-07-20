@@ -793,6 +793,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
   const frameRef = useRef(null);
   const [dragId, setDragId] = useState(null);
   const [view, setView] = useState({ zoom: 1, panX: 0, panY: 0 });
+  const [touchMode, setTouchMode] = useState(false);
   const selectedGrave = graves.find((grave) => grave.id === selectedId);
 
   useLayoutEffect(() => {
@@ -990,7 +991,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
 
   function handlePointerDown(event) {
     if (editable || event.target.closest?.(".mapControls")) return;
-    if (event.pointerType === "touch") return;
+    if (event.pointerType === "touch" && !touchMode) return;
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     event.preventDefault();
     event.target.setPointerCapture?.(event.pointerId);
@@ -1001,7 +1002,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
   }
 
   function handlePointerMove(event) {
-    if (event.pointerType === "touch") return;
+    if (event.pointerType === "touch" && !touchMode) return;
     const gesture = gestureRef.current;
     if (!gesture || editable || !pointersRef.current.has(event.pointerId)) return;
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -1041,7 +1042,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
       setDragId(null);
       return;
     }
-    if (event.pointerType === "touch") return;
+    if (event.pointerType === "touch" && !touchMode) return;
     pointersRef.current.delete(event.pointerId);
     if (pointersRef.current.size === 1) {
       beginPan([...pointersRef.current.values()][0]);
@@ -1096,7 +1097,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
 
   return (
     <div
-      className="cemeteryCanvas"
+      className={`cemeteryCanvas ${touchMode ? "touchMode" : ""}`}
       ref={ref}
       onClick={handleCanvasClick}
       onPointerDown={handlePointerDown}
@@ -1108,6 +1109,15 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
       onPointerCancel={handlePointerUp}
     >
       <div className="mapControls" aria-label="Điều khiển sơ đồ">
+        <button
+          type="button"
+          className={`touchModeToggle ${touchMode ? "active" : ""}`}
+          onClick={() => setTouchMode((current) => !current)}
+          aria-pressed={touchMode}
+          title={touchMode ? "Tắt điều khiển cảm ứng" : "Bật kéo sa bàn"}
+        >
+          <Move size={17} />
+        </button>
         <button type="button" onClick={() => selectedGrave ? focusGrave(selectedGrave, 2.65) : resetView()} title={selectedGrave ? "Tới mộ đang chọn" : "Về toàn cảnh"}>
           <LocateFixed size={17} />
         </button>

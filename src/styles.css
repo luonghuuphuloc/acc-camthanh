@@ -1143,6 +1143,20 @@ button {
   cursor: grabbing;
 }
 
+.cemeteryCanvas.touchMode {
+  touch-action: none;
+}
+
+.touchModeToggle {
+  display: none !important;
+}
+
+.touchModeToggle.active {
+  border-color: var(--primary) !important;
+  color: #ffffff !important;
+  background: var(--primary) !important;
+}
+
 .cemeteryContent {
   position: absolute;
   inset: 0;
@@ -2790,6 +2804,10 @@ dd {
   .mapControls {
     right: 12px;
     top: 12px;
+  }
+
+  .touchModeToggle {
+    display: grid !important;
   }
 
   .sheetScrim {
