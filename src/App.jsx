@@ -351,9 +351,14 @@ function SiteFooter({ settings }) {
 
 function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, query, setQuery, stats, onHome }) {
   const [sheetOpen, setSheetOpen] = useState(Boolean(selectedId));
-  const [visibleCount, setVisibleCount] = useState(5);
+  const [visibleCount, setVisibleCount] = useState(() => (
+    query ? 5 : graves.filter((grave) => grave.type === "special").length
+  ));
   const results = useMemo(() => prioritizeGraves(searchGraves(graves, query)), [graves, query]);
-  const defaultResults = useMemo(() => prioritizeGraves(graves), [graves]);
+  const defaultResults = useMemo(
+    () => prioritizeGraves(graves.filter((grave) => grave.type === "special")),
+    [graves],
+  );
   const visibleResults = query ? results : defaultResults;
   const mapSectionRef = useRef(null);
 
@@ -363,8 +368,8 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
   }, [selectedId]);
 
   useEffect(() => {
-    setVisibleCount(5);
-  }, [query]);
+    setVisibleCount(query ? 5 : defaultResults.length);
+  }, [query, defaultResults.length]);
 
   function clearSelectedGrave() {
     setSelectedId(null);
@@ -437,7 +442,7 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
               <div className="cemeteryResultsHead">
                 <div>
                   <p className="eyebrow">Danh sách phần mộ</p>
-                  <strong>{query ? `${results.length} kết quả phù hợp` : "Ưu tiên mộ đặc biệt"}</strong>
+                  <strong>{query ? `${results.length} kết quả phù hợp` : `${defaultResults.length} mộ đặc biệt`}</strong>
                 </div>
                 <span aria-live="polite">
                   {Math.min(visibleCount, visibleResults.length)} / {visibleResults.length}
