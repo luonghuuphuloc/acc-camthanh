@@ -29,6 +29,7 @@ import "./styles.css";
 
 const API = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:5174" : "");
 const BOOT_TIMEOUT_MS = 12000;
+const HOME_VIDEO_URL = "https://youtu.be/BlluoKb81bQ";
 
 function App() {
   const [route, setRoute] = useState(initialRoute());
@@ -255,6 +256,10 @@ function HomePage({ settings, onCemetery, onHeritage }) {
       </header>
 
       <main className="homePage">
+        <section className="homeVideoSection" aria-label="Video giới thiệu di sản Cẩm Thành" data-reveal>
+          <VideoFrame url={HOME_VIDEO_URL} title="Video giới thiệu di sản Cẩm Thành" />
+        </section>
+
         <section className="heritageMapShell" ref={mapRef} data-reveal>
           <div className="heritageMapFrame">
             <CamThanhMap
@@ -1175,7 +1180,7 @@ function CemeteryMap({ settings, graves, selectedId, onSelect, onMove, editable 
         </div>
         {showRoute && selectedGrave?.placed && (
           <svg className="routeLayer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <polyline points={`42,82 42,67 ${selectedGrave.x},67 ${selectedGrave.x},${selectedGrave.y}`} />
+            <polyline points={`37.5,40.2 37.5,67 ${selectedGrave.x},67 ${selectedGrave.x},${selectedGrave.y}`} />
           </svg>
         )}
         {graveMarkers}
