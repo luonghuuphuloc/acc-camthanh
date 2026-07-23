@@ -150,10 +150,10 @@ app.listen(PORT, "0.0.0.0", () => {
 
 function defaultSettings() {
   return {
-    heritageTitle: "Khám phá di sản Cẩm Thành",
+    heritageTitle: "KHÁM PHÁ DI SẢN LỊCH SỬ & VĂN HOÁ PHƯỜNG CẨM THÀNH",
     heritageIntro:
       "Không gian số hóa giới thiệu các địa điểm văn hóa, lịch sử và tiện ích địa phương của phường Cẩm Thành.",
-    cemeteryTitle: "Sa bàn Nghĩa trang Liệt sĩ Núi Thiên Bút",
+    cemeteryTitle: "Sa bàn Nghĩa trang Liệt sĩ Thiên Bút",
     cemeteryIntro:
       "Tra cứu thông tin, định vị phần mộ và hỗ trợ thân nhân tìm đến đúng vị trí trong khuôn viên nghĩa trang.",
     youtubeUrl: "https://www.youtube.com/watch?v=FiGZm_v72JI",

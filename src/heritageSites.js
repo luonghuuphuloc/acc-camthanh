@@ -117,7 +117,7 @@ export const heritageSites = [
         year: "Sau 1975",
         title: "Quy tập hài cốt liệt sĩ",
         body:
-          "Khi khu Gò Khách được san lấp, hài cốt của 68 liệt sĩ được phát hiện và đưa về Nghĩa trang Liệt sĩ Núi Thiên Bút.",
+          "Khi khu Gò Khách được san lấp, hài cốt của 68 liệt sĩ được phát hiện và đưa về Nghĩa trang Liệt sĩ Thiên Bút.",
       },
       {
         year: "12/1990",

@@ -195,13 +195,13 @@ function initialRoute() {
 const heritagePlaces = [
   {
     id: "nghia-trang-thien-but",
-    name: "Nghĩa trang Liệt sĩ Núi Thiên Bút",
+    name: "Nghĩa trang Liệt sĩ Thiên Bút",
     address: "Phường Cẩm Thành, Quảng Ngãi",
     category: "heritage",
     lat: 15.106445,
     lng: 108.8124696,
     to: 12,
-    image: "/cemetery-map.jpg",
+    image: "/cemetery-tower-thumbnail.png",
     route: "cemetery",
   },
   ...heritageSites.map((site) => ({
@@ -231,18 +231,18 @@ function HomePage({ settings, onCemetery, onHeritage }) {
     <>
       <header className="travelHero">
         <div className="heroImage">
-          <img src="/quang-ngai-hero.png" alt="Trung tâm thành phố Quảng Ngãi" />
+          <img
+            src="/homepage-sunset-heritage.png"
+            alt="Ba địa điểm di sản lịch sử và văn hoá phường Cẩm Thành trong ánh hoàng hôn"
+          />
           <div className="heroLogo" aria-label="Logo Tuổi trẻ Cẩm Thành">
             <img src="/cam-thanh-logo.png" alt="Tuổi trẻ Cẩm Thành" />
           </div>
           <div className="heroOverlay">
             <p>Di sản và địa phương</p>
-            <h1>Khám phá di sản Cẩm Thành</h1>
+            <h1>KHÁM PHÁ DI SẢN LỊCH SỬ & VĂN HOÁ PHƯỜNG CẨM THÀNH</h1>
             <span>{settings.heritageIntro}</span>
             <div className="heroActions">
-              <button className="heroPrimary" onClick={onCemetery}>
-                <Search size={18} /> Tra cứu mộ liệt sĩ <ChevronRight size={18} />
-              </button>
               <button
                 className="heroSecondary"
                 onClick={() => mapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
@@ -397,14 +397,14 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
   return (
     <>
       <header className="heritageDetailHero cemeteryDetailHero">
-        <img src="/cemetery-hero.jpg" alt="Toàn cảnh Nghĩa trang Liệt sĩ Núi Thiên Bút" />
+        <img src="/cemetery-hero.jpg" alt="Toàn cảnh Nghĩa trang Liệt sĩ Thiên Bút" />
         <div className="heritageDetailShade" />
         <button className="detailBack" onClick={onHome}>
           <ArrowLeft size={18} /> Khám phá Cẩm Thành
         </button>
         <div className="heritageDetailTitle">
           <p>Công trình thanh niên số hóa</p>
-          <h1>Nghĩa trang Liệt sĩ Núi Thiên Bút</h1>
+          <h1>Nghĩa trang Liệt sĩ Thiên Bút</h1>
           <span>{settings.cemeteryIntro}</span>
         </div>
       </header>
@@ -478,10 +478,10 @@ function CemeteryPage({ settings, graves, selected, selectedId, setSelectedId, q
             <h2>Câu chuyện qua hình ảnh</h2>
             <p>
               Phim tư liệu giới thiệu không gian tưởng niệm và hành trình số hóa thông tin
-              tại Nghĩa trang Liệt sĩ Núi Thiên Bút.
+              tại Nghĩa trang Liệt sĩ Thiên Bút.
             </p>
           </div>
-          <VideoFrame url={settings.youtubeUrl} title="Video thuyết minh Nghĩa trang Liệt sĩ Núi Thiên Bút" />
+          <VideoFrame url={settings.youtubeUrl} title="Video thuyết minh Nghĩa trang Liệt sĩ Thiên Bút" />
         </section>
 
         <section className="heritageVisit cemeteryVisit" data-reveal>
@@ -1463,7 +1463,7 @@ async function createGraveQrPng(grave) {
   ctx.fillStyle = "#8d7561";
   ctx.font = "500 24px system-ui, -apple-system, 'Segoe UI', sans-serif";
   ctx.fillText("Quét mã để xem hồ sơ, vị trí và chỉ đường trên sa bàn", 450, 1084);
-  ctx.fillText("Nghĩa trang Liệt sĩ Núi Thiên Bút", 450, 1122);
+  ctx.fillText("Nghĩa trang Liệt sĩ Thiên Bút", 450, 1122);
 
   return canvas.toDataURL("image/png");
 }
